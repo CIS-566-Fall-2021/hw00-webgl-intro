@@ -1,11 +1,20 @@
 # HW 0: Noisy Planet Part 1 (Intro to Javascript and WebGL)
 
+## Project: Cloudy Cube
+By An Duong
+
+<img src="cube1.png" width="500"/> <img src="cube2.png" width="500"/>
+
+A cube was animated and textured using FBM noise with cubic interpolation. The result was a texture that resembled cloudy skies. The cube and clouds move over time.
+The user can adjust the colors of the clouds and sky by using the color pickers.
+
+Live Demo https://onlyname1.github.io/hw00-webgl-intro/
+
+## Objective
 <p align="center">
   <img width="360" height="360" src="https://user-images.githubusercontent.com/1758825/132532354-e3a45402-e484-499e-bfa7-2d73b9f2c946.png">
 </p>
 <p align="center">(source: Ken Perlin)</p>
-
-## Objective
 - Check that the tools and build configuration we will be using for the class works.
 - Start learning Typescript and WebGL2
 - Practice implementing noise
