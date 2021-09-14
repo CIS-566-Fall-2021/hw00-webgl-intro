@@ -6,7 +6,7 @@ I used fractal brownian motion as the noise function to paint procedural color o
 The geometries are changing size as well as changing position over time.
 
 Screenshot:
-![](./penumbra.png)
+![](./screenshot.png)
 
 Live Demo Link:
 https://hli605.github.io/hw00-webgl-intro/
