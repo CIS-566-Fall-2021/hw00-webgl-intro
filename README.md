@@ -1,5 +1,16 @@
 # HW 0: Noisy Planet Part 1 (Intro to Javascript and WebGL)
 
+Description:
+I implemented the dat.gui.
+I used fractal brownian motion as the noise function to paint procedural color on geometries. Also, the fbm moves over time.
+The geometries are changing size as well as changing position over time.
+
+Screenshot:
+![](./mySS.png)
+
+Live Demo Link:
+https://hli605.github.io/hw00-webgl-intro/
+
 <p align="center">
   <img width="360" height="360" src="https://user-images.githubusercontent.com/1758825/132532354-e3a45402-e484-499e-bfa7-2d73b9f2c946.png">
 </p>
