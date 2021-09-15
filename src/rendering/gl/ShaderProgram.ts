@@ -1,3 +1,6 @@
+
+// Original code by Adam Mally, additions by Nathan Devlin
+
 import {vec4, mat4} from 'gl-matrix';
 import Drawable from './Drawable';
 import {gl} from '../../globals';
@@ -30,6 +33,8 @@ class ShaderProgram {
   unifViewProj: WebGLUniformLocation;
   unifColor: WebGLUniformLocation;
 
+  unifCurrTick: WebGLUniformLocation;
+
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
 
@@ -48,6 +53,9 @@ class ShaderProgram {
     this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
     this.unifViewProj   = gl.getUniformLocation(this.prog, "u_ViewProj");
     this.unifColor      = gl.getUniformLocation(this.prog, "u_Color");
+    
+    // currTick is referred to as u_Time in the shaders
+    this.unifCurrTick = gl.getUniformLocation(this.prog, "u_Time");
   }
 
   use() {
@@ -85,6 +93,17 @@ class ShaderProgram {
     }
   }
 
+
+  setCurrTick(currTick: number)
+  {
+    this.use();
+    if(this.unifCurrTick !== -1)
+    {
+      gl.uniform1f(this.unifCurrTick, currTick);
+    }
+  }
+
+
   draw(d: Drawable) {
     this.use();
 
@@ -107,3 +126,4 @@ class ShaderProgram {
 };
 
 export default ShaderProgram;
+
