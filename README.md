@@ -10,6 +10,13 @@
 - Start learning Typescript and WebGL2
 - Practice implementing noise
 
+## Felicity's Submission
+![demoImg](https://user-images.githubusercontent.com/59979404/133345919-207b6eb4-cc4d-41a9-9fd1-9aa101688039.PNG)
+
+The fragment shader uses a colour palette, u_Time, and summed perlin to apply dynamic noise, and the vertex shader alters vertex y and z positions using sin and cos. The colour of the cube can be changed via the gui on the top right.
+
+Link to demo: [https://feliyick.github.io/hw00-webgl-intro/](https://feliyick.github.io/hw00-webgl-intro/)
+
 ## Forking the Code
 Rather than cloning the homework repository, please __fork__ the code into your own repository using the `Fork` button in the upper-right hand corner of the Github UI. This will enable you to have your own personal repository copy of the code, and let you make a live demo (described later in this document).
 
