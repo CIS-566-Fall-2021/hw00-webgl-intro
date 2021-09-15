@@ -19,6 +19,7 @@ uniform vec4 u_Color; // The color with which to render this instance of geometr
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
 in vec4 fs_Col;
+in vec4 fs_Pos;
 
 out vec4 out_Col; // This is the final output color that you will see on your
                   // screen for the pixel that is currently being processed.
@@ -72,27 +73,6 @@ float fade(float t)
     return (6.0 * t5) - (15.0 * t4) + (10.0 * t3);        
 }    
 
-/**
- * The meat of it:
- *
- * It helps to visualize the unit cube:
- *
- *      (0,1,1)----------------(1,1,1)
- *        /|                     /|
- *       / |                    / |
- *      /  |                   /  |
- *     /   |                  /   |
- * (0,1,0)-+--------------(1,1,0) |
- *    |    |                 |    |
- *    |    |                 |    |
- *    |    |                 |    |
- *    | (0,0,1)--------------+-(1,0,1)
- *    |   /                  |   /
- *    |  /                   |  /
- *    | /                    | /
- *    |/                     |/ 
- * (0,0,0)----------------(1,0,0)
- */
 float noise(in vec3 coord)
 {
     vec3 cell = floor(coord);
@@ -157,5 +137,12 @@ void main()
                                                             //to simulate ambient lighting. This ensures that faces that are not
                                                             //lit by our point light are not completely black.
 
-        out_Col = vec4(diffuseColor.rgb * lightIntensity, diffuseColor.a);
+        float freq = 7.0;                                                   
+        float noiseVal = 1.0 - abs(noise(freq * fs_Pos.xyz));
+
+        if (noiseVal > 0.97) {
+            out_Col = vec4(vec3(1,1,1) * lightIntensity, 1);
+        } else {
+            out_Col = vec4(noiseVal * diffuseColor.rgb * lightIntensity, diffuseColor.a);
+        }
 }

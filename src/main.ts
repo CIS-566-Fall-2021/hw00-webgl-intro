@@ -23,6 +23,8 @@ let square: Square;
 let prevTesselations: number = 5;
 let cubeColor: vec4 = vec4.fromValues(1, 0, 1, 1);
 
+let time: number = 0;
+
 function loadScene() {
   cube = new Cube(vec3.fromValues(0, 0, 0));
   cube.create();
@@ -72,6 +74,8 @@ function main() {
 
   // This function will be called every frame
   function tick() {
+    lambert.setTime(time);
+    time++;
     camera.update();
     stats.begin();
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
