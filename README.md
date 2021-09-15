@@ -75,3 +75,6 @@ To check if everything is on the right track:
   - Interfaces https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API
   - Types https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Types
   - Constants https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
+
+## Custom Shaders
+Created a custom fragment shader using 3D Perlin noise to create a glow like effect by locking the color values into white after reaching a certain threshold. Created a custom vertex shader that slowly pulls the cube apart as well as pulses the cube's size. Link to live demo: https://18smlee.github.io/hw00-webgl-intro/
