@@ -72,9 +72,14 @@ function main() {
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/lambert-frag.glsl')),
   ]);
 
+  const custom_shader = new ShaderProgram([
+    new Shader(gl.VERTEX_SHADER, require('./shaders/custom-vert.glsl')),
+    new Shader(gl.FRAGMENT_SHADER, require('./shaders/custom-frag.glsl')),
+  ]);
+
   // This function will be called every frame
   function tick() {
-    lambert.setTime(time);
+    custom_shader.setTime(time);
     time++;
     camera.update();
     stats.begin();
@@ -87,7 +92,7 @@ function main() {
       cube.create();
     }
 
-    renderer.render(camera, lambert, [
+    renderer.render(camera, custom_shader, [
       cube,
     ], cubeColor);
     stats.end();
