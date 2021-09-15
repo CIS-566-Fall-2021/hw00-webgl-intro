@@ -5,6 +5,15 @@
 </p>
 <p align="center">(source: Ken Perlin)</p>
 
+## Result
+
+![Image1](https://github.com/QennyS/hw00-webgl-intro/blob/master/Demo.gif) 
+
+I used FBM noise which is adopted from Adam's implementation on Shadertoy and modified it with Iq's warping technique to create such deformed pattern. 
+As for the vertex shader, I simply make all vertices bounce from it's original position to a new position using sin function. 
+
+Live Link: https://qennys.github.io/hw00-webgl-intro/
+
 ## Objective
 - Check that the tools and build configuration we will be using for the class works.
 - Start learning Typescript and WebGL2
