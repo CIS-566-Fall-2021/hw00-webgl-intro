@@ -1,3 +1,10 @@
+# Di Lu Results
+
+![cube](https://user-images.githubusercontent.com/43430369/133516073-d67eeea2-0dfc-4665-917e-58f238e459e7.png)
+![cube2](https://user-images.githubusercontent.com/43430369/133516088-40bddfc9-54ae-4ccd-a7c4-2b1d637eb425.png)
+
+Link: [dluisnothere.github.io/hw00-webgl-intro](https://dluisnothere.github.io/hw00-webgl-intro)
+
 # HW 0: Noisy Planet Part 1 (Intro to Javascript and WebGL)
 
 <p align="center">
