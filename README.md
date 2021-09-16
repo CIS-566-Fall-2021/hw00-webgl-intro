@@ -8,7 +8,7 @@
   <img width="360" height="360" src="https://github.com/gserena01/hw00-webgl-intro/blob/master/noise_Cube.PNG
 ">
 </p>
-<p align="center">(source: Ken Perlin)</p>
+<p align="center">(source: Serena Gandhi)</p>
 
 # HW 0: Noisy Planet Part 1 (Intro to Javascript and WebGL)
 
