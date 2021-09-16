@@ -1,3 +1,8 @@
+# My description
+
+## This project features a 3D cube with 3D worley noise with an applied color palette.
+## There is also some non-uniform displacement to animate the cube's vertices.
+
 # HW 0: Noisy Planet Part 1 (Intro to Javascript and WebGL)
 
 <p align="center">
