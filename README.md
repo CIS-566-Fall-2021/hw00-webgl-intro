@@ -4,6 +4,12 @@
 ## There is also some non-uniform displacement to animate the cube's vertices.
 ## Link: https://gserena01.github.io/hw00-webgl-intro/
 
+<p align="center">
+  <img width="360" height="360" src="https://github.com/gserena01/hw00-webgl-intro/blob/master/noise_Cube.PNG
+">
+</p>
+<p align="center">(source: Ken Perlin)</p>
+
 # HW 0: Noisy Planet Part 1 (Intro to Javascript and WebGL)
 
 <p align="center">
