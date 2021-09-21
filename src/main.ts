@@ -74,6 +74,11 @@ function main() {
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/lambert-frag.glsl')),
   ]);
 
+  const planet_shader = new ShaderProgram([
+    new Shader(gl.VERTEX_SHADER, require('./shaders/planet-vert.glsl')),
+    new Shader(gl.FRAGMENT_SHADER, require('./shaders/planet-frag.glsl')),
+  ]);
+
   // const custom_shader = new ShaderProgram([
   //   new Shader(gl.VERTEX_SHADER, require('./shaders/custom-vert.glsl')),
   //   new Shader(gl.FRAGMENT_SHADER, require('./shaders/custom-frag.glsl')),
@@ -81,8 +86,8 @@ function main() {
 
   // This function will be called every frame
   function tick() {
-    // custom_shader.setTime(time);
-    // time++;
+    planet_shader.setTime(time);
+    time++;
     camera.update();
     stats.begin();
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
@@ -94,7 +99,7 @@ function main() {
       icosphere.create();
     }
 
-    renderer.render(camera, lambert, [
+    renderer.render(camera, planet_shader, [
       icosphere,
     ], cubeColor);
     stats.end();
