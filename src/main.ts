@@ -26,10 +26,12 @@ let cubeColor: vec4 = vec4.fromValues(1, 0, 1, 1);
 let time: number = 0;
 
 function loadScene() {
-  cube = new Cube(vec3.fromValues(0, 0, 0));
-  cube.create();
-  square = new Square(vec3.fromValues(0, 0, 0));
-  square.create();
+  icosphere = new Icosphere(vec3.fromValues(0, 0, 0), 1, controls.tesselations);
+  icosphere.create();
+  // cube = new Cube(vec3.fromValues(0, 0, 0));
+  // cube.create();
+  // square = new Square(vec3.fromValues(0, 0, 0));
+  // square.create();
 }
 
 function main() {
@@ -72,15 +74,15 @@ function main() {
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/lambert-frag.glsl')),
   ]);
 
-  const custom_shader = new ShaderProgram([
-    new Shader(gl.VERTEX_SHADER, require('./shaders/custom-vert.glsl')),
-    new Shader(gl.FRAGMENT_SHADER, require('./shaders/custom-frag.glsl')),
-  ]);
+  // const custom_shader = new ShaderProgram([
+  //   new Shader(gl.VERTEX_SHADER, require('./shaders/custom-vert.glsl')),
+  //   new Shader(gl.FRAGMENT_SHADER, require('./shaders/custom-frag.glsl')),
+  // ]);
 
   // This function will be called every frame
   function tick() {
-    custom_shader.setTime(time);
-    time++;
+    // custom_shader.setTime(time);
+    // time++;
     camera.update();
     stats.begin();
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
@@ -88,12 +90,12 @@ function main() {
     if(controls.tesselations != prevTesselations)
     {
       prevTesselations = controls.tesselations;
-      cube = new Cube(vec3.fromValues(0, 0, 0));
-      cube.create();
+      icosphere = new Icosphere(vec3.fromValues(0, 0, 0), 1, prevTesselations);
+      icosphere.create();
     }
 
-    renderer.render(camera, custom_shader, [
-      cube,
+    renderer.render(camera, lambert, [
+      icosphere,
     ], cubeColor);
     stats.end();
 
