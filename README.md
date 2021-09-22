@@ -10,6 +10,9 @@
 </p>
 <p align="center">(source: Serena Gandhi)</p>
 
+![plot](master/noise_Cube.PNG)
+
+
 # HW 0: Noisy Planet Part 1 (Intro to Javascript and WebGL)
 
 <p align="center">
