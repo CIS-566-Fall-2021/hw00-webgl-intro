@@ -153,15 +153,18 @@ void main()
     float mountain_noise = 1.f;
 
     // apply to one section of planet
-    if (p.x <= 1.0 && p.x >= 0.0 && p.y <= 1.0 && p.y >= 0.0) {
+    crater_noise = clamp(cos(crater_freq * noise(p.xyz * crater_density + (0.0006 * u_Time))), 0.9, 1.0);
+    /* if (p.x <= 1.0 && p.x >= 0.0 && p.y <= 1.0 && p.y >= 0.0) {
         crater_noise = clamp(cos(crater_freq * noise(p.xyz * crater_density + (0.0006 * u_Time))), 0.9, 1.0);
-    }
+    } */
     //crater_noise = clamp(p.x, 0.f, 1.f);
     //p.z = noise_val * fs_Nor.z * clamp(cos(0.01* u_Time), 0.5, 1.f);
 
     p.x = mountain_noise * crater_noise * fs_Nor.x;
-    p.y = mountain_noise * crater_noise* fs_Nor.y;
-    p.z = mountain_noise * crater_noise* fs_Nor.z;
+    p.y = mountain_noise * crater_noise * fs_Nor.y;
+    p.z = mountain_noise * crater_noise * fs_Nor.z;
+
+    fs_Pos += p;
 
     vec4 modelposition = u_Model * p;   // Temporarily store the transformed vertex positions for use below
 

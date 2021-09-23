@@ -43,24 +43,25 @@ void main()
         // Compute final shaded color
         out_Col = vec4(diffuseColor.rgb * lightIntensity, diffuseColor.a);
 
-        float dist_to_center = length(fs_Pos);
+        float dist_to_center = length(fs_Pos.xyz);
 
         // Crater color
         float crater_border = 0.2;
         float crater_border_y = 0.1;
-        vec4 grey = vec4(82.0 / 255.0, 73.0 / 255.0, 82.0 / 255.0, diffuseColor.a);
-        vec4 crater_Col = vec4(grey.rgb * lightIntensity, diffuseColor.a);
-        if (dist_to_center < 1.37) {
-            crater_Col = vec4(27.0 / 255.0 , 27.0, 27.0, 0.0);
-        }
+        vec4 grey = vec4(96.0 / 250.0, 107.0 / 250.0, 202.0 / 250.0, diffuseColor.a);
+        vec4 dark_grey = vec4(50.0 / 250.0, 10.0 / 250.0, 50.0 / 250.0, diffuseColor.a) * grey;
+
+        vec4 light = vec4(grey.rgb * lightIntensity, diffuseColor.a);
+        vec4 shadow = vec4(dark_grey.rgb * lightIntensity, diffuseColor.a);
+        vec4 crater_Col = mix(dark_grey, grey, (dist_to_center - 1.9) / (0.1));
+        out_Col = crater_Col;
         
-        
-        if (fs_Pos.x >= crater_border && fs_Pos.y >= crater_border) {
+        /* if (fs_Pos.x >= crater_border && fs_Pos.y >= crater_border) {
             out_Col = crater_Col;
         } else if (fs_Pos.x >= 0.0 && fs_Pos.x < crater_border && fs_Pos.y > 0.0){
             out_Col = mix(out_Col, crater_Col, fs_Pos.x / crater_border);
         } else if (fs_Pos.y >= 0.0 && fs_Pos.y < crater_border && fs_Pos.x > 0.0){
             out_Col = mix(out_Col, crater_Col, fs_Pos.y / crater_border);
-        }
+        } */
        
 }
