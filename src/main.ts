@@ -87,6 +87,7 @@ function main() {
   // This function will be called every frame
   function tick() {
     planet_shader.setTime(time);
+    planet_shader.setCenter(icosphere.center);
     time++;
     camera.update();
     stats.begin();
