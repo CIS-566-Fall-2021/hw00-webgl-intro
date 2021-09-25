@@ -24,6 +24,60 @@ in vec4 fs_Pos;
 out vec4 out_Col; // This is the final output color that you will see on your
                   // screen for the pixel that is currently being processed.
 
+#define NUM_OCTAVES 3
+
+float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
+
+float noise(vec3 p){
+    vec3 a = floor(p);
+    vec3 d = p - a;
+    d = d * d * (3.0 - 2.0 * d);
+
+    vec4 b = a.xxyy + vec4(0.0, 1.0, 0.0, 1.0);
+    vec4 k1 = perm(b.xyxy);
+    vec4 k2 = perm(k1.xyxy + b.zzww);
+
+    vec4 c = k2 + a.zzzz;
+    vec4 k3 = perm(c);
+    vec4 k4 = perm(c + 1.0);
+
+    vec4 o1 = fract(k3 * (1.0 / 41.0));
+    vec4 o2 = fract(k4 * (1.0 / 41.0));
+
+    vec4 o3 = o2 * d.z + o1 * (1.0 - d.z);
+    vec2 o4 = o3.yw * d.x + o3.xz * (1.0 - d.x);
+
+    return o4.y * d.y + o4.x * (1.0 - d.y);
+}
+
+float fbm(vec3 x) {
+	float v = 0.0;
+	float a = 0.5;
+	vec3 shift = vec3(100);
+	for (int i = 0; i < NUM_OCTAVES; ++i) {
+		v += a * noise(x);
+		x = x * 2.0 + shift;
+		a *= 0.5;
+	}
+	return v;
+}
+
+float GetBias(float time, float bias) {
+    return (time / ((((1.0/bias) - 2.0) * (1.0 - time)) + 1.0));
+}
+
+float GetGain(float time, float gain) {
+    if (time < 0.5) {
+        return GetBias(time * 2.0, gain) / 2.0;
+    } else {
+        return GetBias(time * 2.0 - 1.0, 1.0 - gain) / 2.0 + 0.5;
+    }
+}
+vec3 rgb(float r, float g, float b) {
+    return vec3(r / 255.0, g / 255.0, b / 255.0);
+}
 void main()
 {
     // Material base color (before shading)
@@ -40,28 +94,21 @@ void main()
                                                             //to simulate ambient lighting. This ensures that faces that are not
                                                             //lit by our point light are not completely black.
 
+                                                        
         // Compute final shaded color
         out_Col = vec4(diffuseColor.rgb * lightIntensity, diffuseColor.a);
 
-        float dist_to_center = length(fs_Pos.xyz);
+        vec3 noiseInput = fs_Pos.xyz;
+        float noise = fbm(noiseInput);
 
-        // Crater color
-        float crater_border = 0.2;
-        float crater_border_y = 0.1;
-        vec4 grey = vec4(96.0 / 250.0, 107.0 / 250.0, 202.0 / 250.0, diffuseColor.a);
-        vec4 dark_grey = vec4(50.0 / 250.0, 10.0 / 250.0, 50.0 / 250.0, diffuseColor.a) * grey;
+        vec3 surfaceColor = vec3(noise);
 
-        vec4 light = vec4(grey.rgb * lightIntensity, diffuseColor.a);
-        vec4 shadow = vec4(dark_grey.rgb * lightIntensity, diffuseColor.a);
-        vec4 crater_Col = mix(dark_grey, grey, (dist_to_center - 1.9) / (0.1));
-        out_Col = crater_Col;
-        
-        /* if (fs_Pos.x >= crater_border && fs_Pos.y >= crater_border) {
-            out_Col = crater_Col;
-        } else if (fs_Pos.x >= 0.0 && fs_Pos.x < crater_border && fs_Pos.y > 0.0){
-            out_Col = mix(out_Col, crater_Col, fs_Pos.x / crater_border);
-        } else if (fs_Pos.y >= 0.0 && fs_Pos.y < crater_border && fs_Pos.x > 0.0){
-            out_Col = mix(out_Col, crater_Col, fs_Pos.y / crater_border);
-        } */
-       
+        vec3 white = rgb(255.0, 255.0, 255.0);
+        vec3 black = surfaceColor = rgb(0.0, 0.0, 0.0);
+
+        float t = GetGain(noise, 0.05);
+        surfaceColor = mix(black, white, t);
+
+        out_Col = vec4(surfaceColor.xyz, 1.0);
+               
 }
