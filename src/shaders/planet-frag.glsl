@@ -103,12 +103,51 @@ void main()
 
         vec3 surfaceColor = vec3(noise);
 
-        vec3 white = rgb(255.0, 255.0, 255.0);
-        vec3 black = surfaceColor = rgb(0.0, 0.0, 0.0);
+        vec3 waterCol = rgb(10.0, 145.0, 175.0);
+        vec3 deepWaterCol = rgb(0.0, 36.0, 118.0) * waterCol;
+        vec3 landCol = rgb(12.0, 145.0, 82.0);
+        vec3 beachCol = rgb(255.0, 234.0, 200.0);
+        vec3 rockCol = rgb(38.0, 11.0, 11.0) * beachCol;
+        
+        float x = GetGain(noise, 0.3);
+        vec3 waterFinalCol = mix(deepWaterCol, waterCol, x);
+        surfaceColor = waterFinalCol;
 
-        float t = GetGain(noise, 0.05);
-        surfaceColor = mix(black, white, t);
+        // Creates beach level
+        // if (noise > 0.5 && noise < 0.545) {
+        //     float x = GetGain((noise - 0.5) / 0.53, 0.1);
+        //     surfaceColor = mix(beachCol, waterFinalCol, x);
+        // }
 
+        // Creates land level
+        if (noise < 0.5) {
+            if (noise > 0.48) {
+                vec3 black = rgb(0.0, 0.0, 0.0);
+                vec3 white = rgb(255.0, 255.0, 255.0);
+                float x = GetBias((noise - 0.48) / 0.02, 0.3);
+                surfaceColor = mix(rockCol, beachCol, x);
+            } else {
+                surfaceColor = landCol;
+            }
+        }
+        // if (noise <= 0.5) {
+        //     float x = GetGain(noise, 0.01);
+        //     surfaceColor = mix(landCol, waterFinalCol, x);
+        // }
+
+
+        // if (noise < 0.5) {
+        //     surfaceColor = landCol;
+        // }
+
+        // if (noise > 0.5 && noise < 0.512) {
+        //     float t3 = GetBias(noise, 0.0);
+        //     vec3 waterToBeachCol = mix(beachCol, waterFinalCol, 0.0);
+        //     float t4 = GetBias(noise, 0.0);
+        //     surfaceColor = mix(landCol, waterToBeachCol, 1.0);
+        // }
+        
         out_Col = vec4(surfaceColor.xyz, 1.0);
+        
                
 }

@@ -115,17 +115,31 @@ void main()
     vec3 noiseInput = modelposition.xyz;
     float noise = fbm(noiseInput);
 
-    float noiseScale = noise;
-    if (noise > 0.5) {
-       noiseScale = 0.4;
-    }
+    float waterElevation = 0.9;
+    float beachElevation = 0.95;
+    float landElevation = 1.0;
 
-    float t = GetGain(noise, 0.005);
-    float elevation = mix(1.0, 0.85, t);
+    float elevation = waterElevation;
+
+    // // Creates beach level
+    // if (noise > 0.5 && noise < 0.54) {
+    //     elevation = beachElevation;
+    // }
+
+    // Creates land level
+        if (noise < 0.5) {
+            if (noise > 0.48) {
+                vec3 black = rgb(0.0, 0.0, 0.0);
+                vec3 white = rgb(255.0, 255.0, 255.0);
+                float x = GetBias((noise - 0.48) / 0.02, 0.7);
+                elevation = mix(landElevation, waterElevation, x);
+            } else {
+                elevation = landElevation;
+            }
+        }
 
     vec3 offsetAmount = vec3(vs_Nor) * elevation;
     vec3 noisyModelPosition = modelposition.xyz + offsetAmount;
-    //vec3 noisyModelPosition = modelposition.xyz;
     gl_Position = u_ViewProj * vec4(noisyModelPosition, 1.0);
     
     fs_Pos = vs_Pos;
