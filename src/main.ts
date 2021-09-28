@@ -13,6 +13,8 @@ import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
 // This will be referred to by dat.GUI's functions that add GUI elements.
 const controls = {
   tesselations: 5,
+  'terrain frequency': 1.0,
+  'earth to alien': 0.0,
   'Load Scene': loadScene, // A function pointer, essentially
   color: [255, 0, 255]
 };
@@ -20,18 +22,19 @@ const controls = {
 let icosphere: Icosphere;
 let cube: Cube;
 let square: Square;
+
 let prevTesselations: number = 5;
 let cubeColor: vec4 = vec4.fromValues(1, 0, 1, 1);
+
+// Procedural Controls
+let terrainFreq: number = 1.0;
+let earthToAlien: number = 0.0;
 
 let time: number = 0;
 
 function loadScene() {
   icosphere = new Icosphere(vec3.fromValues(0, 0, 0), 1, controls.tesselations);
   icosphere.create();
-  // cube = new Cube(vec3.fromValues(0, 0, 0));
-  // cube.create();
-  // square = new Square(vec3.fromValues(0, 0, 0));
-  // square.create();
 }
 
 function main() {
@@ -48,6 +51,8 @@ function main() {
 
   gui.addColor(controls, 'color').onChange( function() { cubeColor = vec4.fromValues(controls.color[0] / 255, controls.color[1] / 255, controls.color[2] / 255, 1) } );;
   gui.add(controls, 'tesselations', 0, 8).step(1);
+  gui.add(controls, 'terrain frequency', 1.0, 3).step(0.05).onChange(function() { terrainFreq = controls['terrain frequency'] });
+  gui.add(controls, 'earth to alien', 0.0, 1.0).step(0.05).onChange(function() { earthToAlien = controls['earth to alien'] });
   gui.add(controls, 'Load Scene');
 
   // get canvas and webgl context
@@ -86,9 +91,14 @@ function main() {
 
   // This function will be called every frame
   function tick() {
+
     planet_shader.setTime(time);
     planet_shader.setCenter(icosphere.center);
+    planet_shader.setTerrainFreq(terrainFreq);
+    planet_shader.setEarthToAlien(earthToAlien);
+
     time++;
+
     camera.update();
     stats.begin();
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);

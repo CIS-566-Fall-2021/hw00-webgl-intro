@@ -31,6 +31,8 @@ class ShaderProgram {
   unifColor: WebGLUniformLocation;
   unifTime: WebGLUniformLocation;
   unifCenter: WebGLUniformLocation;
+  unifTerrainFreq: WebGLUniformLocation;
+  unifEarthToAlien: WebGLUniformLocation;
 
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
@@ -52,6 +54,10 @@ class ShaderProgram {
     this.unifColor      = gl.getUniformLocation(this.prog, "u_Color");
     this.unifTime      = gl.getUniformLocation(this.prog, "u_Time");
     this.unifCenter      = gl.getUniformLocation(this.prog, "u_Center");
+
+    // Procedural Controls
+    this.unifTerrainFreq = gl.getUniformLocation(this.prog, "terrainFreq");
+    this.unifEarthToAlien = gl.getUniformLocation(this.prog, "earthToAlien");
   }
 
   use() {
@@ -102,6 +108,21 @@ class ShaderProgram {
       gl.uniform4fv(this.unifCenter, center);
     }
   }
+
+  setTerrainFreq(freq: number) {
+    this.use();
+    if (this.unifTerrainFreq !== -1) {
+      gl.uniform1f(this.unifTerrainFreq, freq);
+    }
+  }
+
+  setEarthToAlien(earthToAlien: number) {
+    this.use();
+    if (this.unifEarthToAlien !== -1) {
+      gl.uniform1f(this.unifEarthToAlien, earthToAlien);
+    }
+  }
+
 
   draw(d: Drawable) {
     this.use();

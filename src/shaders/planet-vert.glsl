@@ -23,6 +23,9 @@ uniform highp float u_Time;
 
 uniform vec4 center;
 
+// Procedural Controls
+uniform highp float terrainFreq;    // Sets the frequency of noise that outputs terrain elevations
+
 in vec4 vs_Pos;             // The array of vertex positions passed to the shader
 
 in vec4 vs_Nor;             // The array of vertex normals passed to the shader
@@ -139,15 +142,15 @@ void main()
                                              // used to render the final positions of the geometry's vertices
 
 
-    // Creates elevated terrain 
-    vec3 noiseInput = modelposition.xyz;
+    // Creates elevated terrain
+    vec3 noiseInput = modelposition.xyz * terrainFreq;
     float noise = fbm(noiseInput);
 
     float waterElevation = 0.9;
     float beachElevation = 0.93;
     float landElevation = 1.0;
     float mountElevation1 = 1.05;
-    float mountElevation2 = 1.2;
+    float mountElevation2 = 1.7;
     float mountElevation3 = 1.7;
 
     float waveNoise = noise2(5.0 * noise2((0.0006 * u_Time) + vec3(noiseInput) + noiseInput) + noiseInput);
@@ -175,12 +178,9 @@ void main()
     if (noise > 0.37 && noise < 0.4) {
         float x = GetBias((noise - 0.37) / 0.03, 0.9);
         elevation =  mix(mountElevation1, landElevation, x);
-     } else if (noise > 0.32 && noise < 0.37) {
-        float x = GetBias((noise - 0.32) / 0.08, 0.9);
+    } else if (noise < 0.37) {
+        float x = GetGain(noise / 0.37, mountainNoise);
         elevation =  mix(mountElevation2, mountElevation1, x);
-    } else if (noise < 0.4) {
-        float x = GetGain(noise / 0.32, mountainNoise);
-        elevation =  mix(mountElevation3, mountElevation2, x);
     }
 
     vec3 offsetAmount = vec3(vs_Nor) * elevation;
