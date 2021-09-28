@@ -14,6 +14,8 @@ precision highp float;
 
 uniform vec4 u_Color; // The color with which to render this instance of geometry.
 
+uniform highp float u_Time;
+
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
 in vec4 fs_Nor;
@@ -24,6 +26,8 @@ in vec4 fs_Pos;
 out vec4 out_Col; // This is the final output color that you will see on your
                   // screen for the pixel that is currently being processed.
 
+
+// FBM Noise ------------------------------------
 #define NUM_OCTAVES 3
 
 float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
@@ -64,6 +68,128 @@ float fbm(vec3 x) {
 	return v;
 }
 
+// Noise2 ------------------------------------
+float hash(float n) { return fract(sin(n) * 1e4); }
+float hash(vec2 p) { return fract(1e4 * sin(17.0 * p.x + p.y * 0.1) * (0.1 + abs(sin(p.y * 13.0 + p.x)))); }
+
+float noise2(vec3 x) {
+	const vec3 step = vec3(110, 241, 171);
+
+	vec3 i = floor(x);
+	vec3 f = fract(x);
+ 
+    float n = dot(i, step);
+
+	vec3 u = f * f * (3.0 - 2.0 * f);
+	return mix(mix(mix( hash(n + dot(step, vec3(0, 0, 0))), hash(n + dot(step, vec3(1, 0, 0))), u.x),
+                   mix( hash(n + dot(step, vec3(0, 1, 0))), hash(n + dot(step, vec3(1, 1, 0))), u.x), u.y),
+               mix(mix( hash(n + dot(step, vec3(0, 0, 1))), hash(n + dot(step, vec3(1, 0, 1))), u.x),
+                   mix( hash(n + dot(step, vec3(0, 1, 1))), hash(n + dot(step, vec3(1, 1, 1))), u.x), u.y), u.z);
+}
+
+// Noise3 ------------------------------------
+float noise3(float x) {
+	float i = floor(x);
+	float f = fract(x);
+	float u = f * f * (3.0 - 2.0 * f);
+	return mix(hash(i), hash(i + 1.0), u);
+}
+
+// Perlin Noise ------------------------------------
+float map(float value, float old_lo, float old_hi, float new_lo, float new_hi)
+{
+	float old_range = old_hi - old_lo;
+    if (old_range == 0.0) {
+	    return new_lo; 
+	} else {
+	    float new_range = new_hi - new_lo;  
+	    return (((value - old_lo) * new_range) / old_range) + new_lo;
+	}
+}
+
+/**
+ * The canonical GLSL hash function
+ */
+float hash1(float x)
+{
+	return fract(sin(x) * 43758.5453123);
+}
+
+/** 
+ * Nothing is mathematically sound about anything below: 
+ * I just chose values based on experimentation and some 
+ * intuitions I have about what makes a good hash function
+ */
+vec3 gradient(vec3 cell)
+{
+	float h_i = hash1(cell.x);
+	float h_j = hash1(cell.y + pow(h_i, 3.0));
+	float h_k = hash1(cell.z + pow(h_j, 5.0));
+    float ii = map(fract(h_i + h_j + h_k), 0.0, 1.0, -1.0, 1.0);
+    float jj = map(fract(h_j + h_k), 0.0, 1.0, -1.0, 1.0);
+	float kk = map(h_k, 0.0, 1.0, -1.0, 1.0);
+    return normalize(vec3(ii, jj, kk));
+}
+
+/**
+ * Perlin's "ease-curve" fade function
+ */
+float fade(float t)
+{
+   	float t3 = t * t * t;
+    float t4 = t3 * t;
+    float t5 = t4 * t;
+    return (6.0 * t5) - (15.0 * t4) + (10.0 * t3);        
+}    
+
+float pnoise(in vec3 coord)
+{
+    vec3 cell = floor(coord);
+    vec3 unit = fract(coord);
+   
+    vec3 unit_000 = unit;
+    vec3 unit_100 = unit - vec3(1.0, 0.0, 0.0);
+    vec3 unit_001 = unit - vec3(0.0, 0.0, 1.0);
+    vec3 unit_101 = unit - vec3(1.0, 0.0, 1.0);
+    vec3 unit_010 = unit - vec3(0.0, 1.0, 0.0);
+    vec3 unit_110 = unit - vec3(1.0, 1.0, 0.0);
+    vec3 unit_011 = unit - vec3(0.0, 1.0, 1.0);
+    vec3 unit_111 = unit - 1.0;
+
+    vec3 c_000 = cell;
+    vec3 c_100 = cell + vec3(1.0, 0.0, 0.0);
+    vec3 c_001 = cell + vec3(0.0, 0.0, 1.0);
+    vec3 c_101 = cell + vec3(1.0, 0.0, 1.0);
+    vec3 c_010 = cell + vec3(0.0, 1.0, 0.0);
+    vec3 c_110 = cell + vec3(1.0, 1.0, 0.0);
+    vec3 c_011 = cell + vec3(0.0, 1.0, 1.0);
+    vec3 c_111 = cell + 1.0;
+
+    float wx = fade(unit.x);
+    float wy = fade(unit.y);
+    float wz = fade(unit.z);
+ 
+    float x000 = dot(gradient(c_000), unit_000);
+	float x100 = dot(gradient(c_100), unit_100);
+	float x001 = dot(gradient(c_001), unit_001);
+	float x101 = dot(gradient(c_101), unit_101);
+	float x010 = dot(gradient(c_010), unit_010);
+	float x110 = dot(gradient(c_110), unit_110);
+	float x011 = dot(gradient(c_011), unit_011);
+	float x111 = dot(gradient(c_111), unit_111);
+   
+    float y0 = mix(x000, x100, wx);
+    float y1 = mix(x001, x101, wx);
+    float y2 = mix(x010, x110, wx);
+    float y3 = mix(x011, x111, wx);
+    
+	float z0 = mix(y0, y2, wy);
+    float z1 = mix(y1, y3, wy);
+    
+    return mix(z0, z1, wz);
+}	
+
+
 float GetBias(float time, float bias) {
     return (time / ((((1.0/bias) - 2.0) * (1.0 - time)) + 1.0));
 }
@@ -103,50 +229,55 @@ void main()
 
         vec3 surfaceColor = vec3(noise);
 
+        // Color palette
         vec3 waterCol = rgb(10.0, 145.0, 175.0);
         vec3 deepWaterCol = rgb(0.0, 36.0, 118.0) * waterCol;
         vec3 landCol = rgb(12.0, 145.0, 82.0);
+        vec3 deepLandCol = rgb(33.0, 125.0, 1.0) * landCol;
         vec3 beachCol = rgb(255.0, 234.0, 200.0);
-        vec3 rockCol = rgb(38.0, 11.0, 11.0) * beachCol;
+        vec3 dirtCol = rgb(38.0, 11.0, 11.0);
+        vec3 mountainCol = rgb(53.0, 43.0, 53.0);
+        vec3 lightMountainCol = rgb(156.0, 149.0, 164.0);
+
+        vec3 black = rgb(0.0, 0.0, 0.0);
+        vec3 white = rgb(255.0, 255.0, 255.0);
         
-        float x = GetGain(noise, 0.3);
+        float x = noise2(3.0 * noise2((0.0006 * u_Time) + vec3(noiseInput) + noiseInput) + noiseInput);
         vec3 waterFinalCol = mix(deepWaterCol, waterCol, x);
         surfaceColor = waterFinalCol;
 
         // Creates beach level
-        // if (noise > 0.5 && noise < 0.545) {
-        //     float x = GetGain((noise - 0.5) / 0.53, 0.1);
-        //     surfaceColor = mix(beachCol, waterFinalCol, x);
-        // }
+        if (noise > 0.4 && noise < 0.52) {
+            surfaceColor = beachCol;
+        } else if (noise > 0.52 && noise < 0.53) {
+            float x = GetBias((noise - 0.52) / 0.01, 0.3);
+            surfaceColor = mix(beachCol, waterFinalCol, x);
+        }
 
         // Creates land level
-        if (noise < 0.5) {
-            if (noise > 0.48) {
-                vec3 black = rgb(0.0, 0.0, 0.0);
-                vec3 white = rgb(255.0, 255.0, 255.0);
-                float x = GetBias((noise - 0.48) / 0.02, 0.3);
-                surfaceColor = mix(rockCol, beachCol, x);
-            } else {
-                surfaceColor = landCol;
-            }
+        if (noise > 0.48 && noise < 0.5) {
+            float x = GetBias((noise - 0.48) / 0.02, 0.3);
+            surfaceColor = mix(dirtCol, beachCol, x);
+        } else if (noise > 0.4 && noise < 0.48) {
+            float x = GetGain((noise - 0.4) / 0.08, 0.4);
+            surfaceColor = mix(landCol, deepLandCol, x);
+        } else if (noise < 0.5) {
+            surfaceColor = landCol;
         }
-        // if (noise <= 0.5) {
-        //     float x = GetGain(noise, 0.01);
-        //     surfaceColor = mix(landCol, waterFinalCol, x);
-        // }
-
-
-        // if (noise < 0.5) {
-        //     surfaceColor = landCol;
-        // }
-
-        // if (noise > 0.5 && noise < 0.512) {
-        //     float t3 = GetBias(noise, 0.0);
-        //     vec3 waterToBeachCol = mix(beachCol, waterFinalCol, 0.0);
-        //     float t4 = GetBias(noise, 0.0);
-        //     surfaceColor = mix(landCol, waterToBeachCol, 1.0);
-        // }
         
+        // Creates mountain level
+        float mountainNoise = fbm(10.0 * noiseInput + 20.0);
+        if (noise > 0.37 && noise < 0.4) {
+            float x = GetGain((noise - 0.37) / 0.03, mountainNoise);
+            surfaceColor = mix(dirtCol, landCol, x);
+        } else if (noise > 0.32 && noise < 0.37) {
+            float x = GetGain((noise - 0.32) / 0.05, mountainNoise);
+            surfaceColor = mix(mountainCol, dirtCol,  x);
+        } else if (noise < 0.4) {
+            float x = GetGain(noise / 0.32, mountainNoise);
+            surfaceColor = mix(white, mountainCol,  x);
+        }
+
         out_Col = vec4(surfaceColor.xyz, 1.0);
         
                
