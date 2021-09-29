@@ -11,7 +11,7 @@ There are four different types of terrain: ocean, beach, forest, and mountains. 
 
 I then applied gain and bias functions to certain ranges that transition between different biome thresholds. This was to give the slope of the mountains and beaches a more curved look, rather than just being extruded straight up from the surface of the sphere. 
 
-![image](images/beaches.PNG)
+![image](images/beach.PNG)
 
 The water has a warped noise function applied to it to give it an unconvential marbled look. The vertices are also slightly raised with the moving water to emulate slow moving waves.
 
