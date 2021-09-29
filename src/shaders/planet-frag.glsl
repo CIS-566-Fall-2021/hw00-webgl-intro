@@ -28,12 +28,16 @@ in vec4 fs_LightVec;
 in vec4 fs_Col;
 in vec4 fs_Pos;
 
+in vec3 p1;
+in vec3 p2;
+in vec3 p3;
+in vec3 p4;
+
 out vec4 out_Col; // This is the final output color that you will see on your
                   // screen for the pixel that is currently being processed.
 
 
 // FBM Noise ------------------------------------
-#define NUM_OCTAVES 3
 
 float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
 vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
@@ -61,11 +65,11 @@ float noise(vec3 p){
     return o4.y * d.y + o4.x * (1.0 - d.y);
 }
 
-float fbm(vec3 x) {
+float fbm(vec3 x , int num_octaves) {
 	float v = 0.0;
 	float a = 0.5;
 	vec3 shift = vec3(100);
-	for (int i = 0; i < NUM_OCTAVES; ++i) {
+	for (int i = 0; i < num_octaves; ++i) {
 		v += a * noise(x);
 		x = x * 2.0 + shift;
 		a *= 0.5;
@@ -206,105 +210,139 @@ float GetGain(float time, float gain) {
         return GetBias(time * 2.0 - 1.0, 1.0 - gain) / 2.0 + 0.5;
     }
 }
+
 vec3 rgb(float r, float g, float b) {
     return vec3(r / 255.0, g / 255.0, b / 255.0);
 }
+
+mat4 rotationX( in float angle ) {
+	return mat4(	1.0,		0,			0,			0,
+			 		0, 	cos(angle),	-sin(angle),		0,
+					0, 	sin(angle),	 cos(angle),		0,
+					0, 			0,			  0, 		1);
+}
+
+mat4 rotationY( in float angle ) {
+	return mat4(	cos(angle),		0,		sin(angle),	0,
+			 				0,		1.0,			 0,	0,
+					-sin(angle),	0,		cos(angle),	0,
+							0, 		0,				0,	1);
+}
+
+mat4 rotationZ( in float angle ) {
+	return mat4(	cos(angle),		-sin(angle),	0,	0,
+			 		sin(angle),		cos(angle),		0,	0,
+							0,				0,		1,	0,
+							0,				0,		0,	1);
+}
+
 void main()
 {
     // Material base color (before shading)
-        vec4 diffuseColor = u_Color;
+    vec4 diffuseColor = u_Color;
+    vec3 noiseInput = fs_Pos.xyz * terrainFreq;
 
-        // Calculate the diffuse term for Lambert shading
-        float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
-        // Avoid negative lighting values
-        // diffuseTerm = clamp(diffuseTerm, 0, 1);
+    float noise = fbm(noiseInput, 3);
 
-        float ambientTerm = 0.2;
+    // Calculate new normal based on elevated neighbors passed in from vertex shader
+    // vec4 norm_deformed = vec4(cross(normalize(p1 - p3), normalize(p2 - p4)), 1.0);
+    // out_Col = norm_deformed;
+    // return;
 
-        float lightIntensity = diffuseTerm + ambientTerm;   //Add a small float value to the color multiplier
-                                                            //to simulate ambient lighting. This ensures that faces that are not
-                                                            //lit by our point light are not completely black.
+    // Calculate the diffuse term for Lambert shading
+    vec4 rotated_lightVec = fs_LightVec * rotationY(0.003 * u_Time);
+    float diffuseTerm = dot(normalize(fs_Nor), normalize(rotated_lightVec));
+    diffuseTerm = clamp(diffuseTerm, 0.0, 1.0);
+    // Initialize specular value so it can be conditionally changed for mountains
+    float spec = 0.0;
 
-                                                        
-        // Compute final shaded color
-        out_Col = vec4(diffuseColor.rgb * lightIntensity, diffuseColor.a);
+    vec3 surfaceColor = vec3(noise);
 
-        vec3 noiseInput = fs_Pos.xyz * terrainFreq;
-        float noise = fbm(noiseInput);
+    // Earth color palette
+    vec3 waterCol_e = rgb(10.0, 145.0, 175.0);
+    vec3 deepWaterCol_e = rgb(0.0, 36.0, 118.0) * waterCol_e;
+    vec3 landCol_e = rgb(12.0, 145.0, 82.0);
+    vec3 deepLandCol_e = rgb(33.0, 125.0, 1.0) * landCol_e;
+    vec3 beachCol_e = rgb(255.0, 234.0, 200.0);
+    vec3 dirtCol_e = rgb(38.0, 11.0, 11.0);
+    vec3 mountainCol_e = rgb(53.0, 43.0, 53.0);
+    vec3 deepMountainCol_e = rgb(125.0, 97.0, 118.0) * mountainCol_e;
 
-        vec3 surfaceColor = vec3(noise);
+    // Creates brush
+    float smallBrushNoise = fbm(75.0 * noiseInput + 20.0, 5);
+    float largeBrushNoise = 1.0 - pnoise(15.0 * noiseInput);
+    float sizeNoise = fbm(80.0 * noiseInput + 20.0, 7);
+    float brushNoise = mix(smallBrushNoise, largeBrushNoise, sizeNoise);
+    
+    // use one of the toolbox functions with noise as input to have brush on the inside but not the outside
 
-        // Earth color palette
-        vec3 waterCol_e = rgb(10.0, 145.0, 175.0);
-        vec3 deepWaterCol_e = rgb(0.0, 36.0, 118.0) * waterCol_e;
-        vec3 landCol_e = rgb(12.0, 145.0, 82.0);
-        vec3 deepLandCol_e = rgb(33.0, 125.0, 1.0) * landCol_e;
-        vec3 beachCol_e = rgb(255.0, 234.0, 200.0);
-        vec3 dirtCol_e = rgb(38.0, 11.0, 11.0);
-        vec3 mountainCol_e = rgb(53.0, 43.0, 53.0);
-        vec3 deepMountainCol_e = rgb(125.0, 97.0, 118.0) * mountainCol_e;
+    // Alien color palette
+    vec3 waterCol_a = rgb(84.0, 195.0, 195.0);
+    vec3 deepWaterCol_a = rgb(42.0, 162.0, 147.0) * waterCol_a;
+    vec3 landCol_a = rgb(122.0, 93.0, 122.0);
+    vec3 deepLandCol_a = rgb(205.0, 16.0, 139.0) * landCol_a;
+    vec3 beachCol_a = rgb(236.0, 148.0, 111.0);
+    vec3 dirtCol_a = rgb(163.0, 8.0, 0.0);
+    vec3 mountainCol_a = rgb(68.0, 39.0, 122.0);
+    vec3 deepMountainCol_a = rgb(61.0, 61.0, 93.0) * mountainCol_a;
 
-        // Alien color palette
-        vec3 waterCol_a = rgb(84.0, 195.0, 195.0);
-        vec3 deepWaterCol_a = rgb(42.0, 162.0, 147.0) * waterCol_a;
-        vec3 landCol_a = rgb(122.0, 93.0, 122.0);
-        vec3 deepLandCol_a = rgb(205.0, 16.0, 139.0) * landCol_a;
-        vec3 beachCol_a = rgb(236.0, 148.0, 111.0);
-        vec3 dirtCol_a = rgb(163.0, 8.0, 0.0);
-        vec3 mountainCol_a = rgb(68.0, 39.0, 122.0);
-        vec3 deepMountainCol_a = rgb(61.0, 61.0, 93.0) * mountainCol_a;
+    vec3 waterCol = mix(waterCol_e, waterCol_a, earthToAlien);
+    vec3 deepWaterCol = mix(deepWaterCol_e, deepWaterCol_a, earthToAlien) * waterCol;
+    vec3 landCol = mix(landCol_e, landCol_a, earthToAlien) * brushNoise;
+    vec3 deepLandCol = mix(deepLandCol_e, deepLandCol_a, earthToAlien) * landCol;
+    vec3 beachCol = mix(beachCol_e, beachCol_a, earthToAlien);
+    vec3 dirtCol = mix(dirtCol_e, dirtCol_a, earthToAlien);
+    vec3 mountainCol = mix(mountainCol_e, mountainCol_a, earthToAlien);
+    vec3 deepMountainCol = mix(deepMountainCol_a, deepMountainCol_e, earthToAlien) * mountainCol;
 
-        vec3 waterCol = mix(waterCol_e, waterCol_a, earthToAlien);
-        vec3 deepWaterCol = mix(deepWaterCol_e, deepWaterCol_a, earthToAlien) * waterCol;
-        vec3 landCol = mix(landCol_e, landCol_a, earthToAlien);
-        vec3 deepLandCol = mix(deepLandCol_e, deepLandCol_a, earthToAlien) * landCol;
-        vec3 beachCol = mix(beachCol_e, beachCol_a, earthToAlien);
-        vec3 dirtCol = mix(dirtCol_e, dirtCol_a, earthToAlien);
-        vec3 mountainCol = mix(mountainCol_e, mountainCol_a, earthToAlien);
-        vec3 deepMountainCol = mix(deepMountainCol_a, deepMountainCol_e, earthToAlien) * mountainCol;
+    vec3 black = rgb(0.0, 0.0, 0.0);
+    vec3 white = rgb(255.0, 255.0, 255.0);
 
+    // Creates water level
+    float x = noise2(3.0 * noise2((0.0006 * u_Time) + vec3(noiseInput) + noiseInput) + noiseInput);
+    vec3 waterFinalCol = mix(deepWaterCol, waterCol, x);
+    surfaceColor = waterFinalCol;
 
-        vec3 black = rgb(0.0, 0.0, 0.0);
-        vec3 white = rgb(255.0, 255.0, 255.0);
-        
-        // Creates water level
-        float x = noise2(3.0 * noise2((0.0006 * u_Time) + vec3(noiseInput) + noiseInput) + noiseInput);
-        vec3 waterFinalCol = mix(deepWaterCol, waterCol, x);
-        surfaceColor = waterFinalCol;
+    // Creates beach level
+    if (noise > 0.48 && noise < 0.52) {
+        surfaceColor = beachCol;
+    } else if (noise > 0.52 && noise < 0.53) {
+        float x = GetBias((noise - 0.52) / 0.01, 0.3);
+        surfaceColor = mix(beachCol, waterFinalCol, x);
+    }
 
-        // Creates beach level
-        if (noise > 0.4 && noise < 0.52) {
-            surfaceColor = beachCol;
-        } else if (noise > 0.52 && noise < 0.53) {
-            float x = GetBias((noise - 0.52) / 0.01, 0.3);
-            surfaceColor = mix(beachCol, waterFinalCol, x);
-        }
+    // Creates land level
+    if (noise > 0.48 && noise < 0.5) {
+        float x = GetBias((noise - 0.48) / 0.02, 0.3);
+        surfaceColor = mix(dirtCol, beachCol, x);
+    } else if (noise > 0.4 && noise < 0.48) {
+        float x = GetGain((noise - 0.4) / 0.08, 0.4);
+        surfaceColor = mix(landCol, deepLandCol, x);
+    }
+    
+    // Creates mountain level
+    float mountainNoise = fbm(10.0 * noiseInput + 20.0, 3);
+    if (noise > 0.37 && noise < 0.4) {
+        float x = GetGain((noise - 0.37) / 0.03, mountainNoise);
+        surfaceColor = mix(deepMountainCol, landCol, x);
+    } else if (noise > 0.32 && noise < 0.37) {
+        float x = GetGain((noise - 0.32) / 0.05, mountainNoise);
+        spec = mix(pow(diffuseTerm, 64.0), 0.0, x);
+        surfaceColor = mix(mountainCol, deepMountainCol, x);
+    } else if (noise < 0.4) {
+        spec = pow(diffuseTerm, 64.0);
+        float x = GetGain(noise / 0.32, mountainNoise);
+        surfaceColor = mix(white, mountainCol, x);
+    }
 
-        // Creates land level
-        if (noise > 0.48 && noise < 0.5) {
-            float x = GetBias((noise - 0.48) / 0.02, 0.3);
-            surfaceColor = mix(dirtCol, beachCol, x);
-        } else if (noise > 0.4 && noise < 0.48) {
-            float x = GetGain((noise - 0.4) / 0.08, 0.4);
-            surfaceColor = mix(landCol, deepLandCol, x);
-        } else if (noise < 0.5) {
-            surfaceColor = landCol;
-        }
-        
-        // Creates mountain level
-        float mountainNoise = fbm(10.0 * noiseInput + 20.0);
-        if (noise > 0.37 && noise < 0.4) {
-            float x = GetGain((noise - 0.37) / 0.03, mountainNoise);
-            surfaceColor = mix(deepMountainCol, landCol, x);
-        } else if (noise > 0.32 && noise < 0.37) {
-            float x = GetGain((noise - 0.32) / 0.05, mountainNoise);
-            surfaceColor = mix(mountainCol, deepMountainCol, x);
-        } else if (noise < 0.4) {
-            float x = GetGain(noise / 0.32, mountainNoise);
-            surfaceColor = mix(white, mountainCol, x);
-        }
+    float ambientTerm = 0.3;
 
-        out_Col = vec4(surfaceColor.xyz, 1.0);
-        
+    float lightIntensity = diffuseTerm + ambientTerm;   //Add a small float value to the color multiplier
+                                                        //to simulate ambient lighting. This ensures that faces that are not
+                                                        //lit by our point light are not completely black.
+
+                                                    
+    // Compute final shaded color
+    out_Col = vec4(surfaceColor.rgb * lightIntensity +  (diffuseTerm / 2.0) * spec, diffuseColor.a);
                
 }
