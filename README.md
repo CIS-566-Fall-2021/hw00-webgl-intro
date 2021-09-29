@@ -13,6 +13,8 @@ I then applied gain and bias functions to certain ranges that transition between
 
 The water has a warped noise function applied to it to give it an unconvential marbled look. The vertices are also slightly raised with the moving water to emulate slow moving waves.
 
+![image](images/water.png)
+
 The land biome has a couple of different noise functions applied to it. There is one to soften the look of the land by interpolating a darker green into a lighter green. There is also a forestNoise value that affects both the color and the vertices. This noise function is made to simulate vegetation or forests scattered across the planet. I created the forest noise function with an fbm function with a lower frequency and a perlin noise function with a higher frequency and interpolated between the two. This gave an interesting output with more variation between sizes of random "blobs", more closely mimicking natural vegetaion. The user can control the density of the forest with the forest density parameter.
 
 The mountain biome has its own mountainNoise fbm function to further its surface and color to mimick natural rock formations. 
