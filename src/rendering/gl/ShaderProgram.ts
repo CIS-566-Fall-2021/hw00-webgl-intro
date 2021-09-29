@@ -33,7 +33,7 @@ class ShaderProgram {
   unifCenter: WebGLUniformLocation;
   unifTerrainFreq: WebGLUniformLocation;
   unifEarthToAlien: WebGLUniformLocation;
-  unifBrushScale: WebGLUniformLocation;
+  unifForestScale: WebGLUniformLocation;
 
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
@@ -59,7 +59,7 @@ class ShaderProgram {
     // Procedural Controls
     this.unifTerrainFreq = gl.getUniformLocation(this.prog, "terrainFreq");
     this.unifEarthToAlien = gl.getUniformLocation(this.prog, "earthToAlien");
-    this.unifBrushScale = gl.getUniformLocation(this.prog, "brushScale");
+    this.unifForestScale = gl.getUniformLocation(this.prog, "forestScale");
   }
 
   use() {
@@ -125,10 +125,10 @@ class ShaderProgram {
     }
   }
   
-  setBrushScale(brushScale: number) {
+  setForestScale(forestScale: number) {
     this.use();
-    if (this.unifBrushScale !== -1) {
-      gl.uniform1f(this.unifBrushScale, brushScale);
+    if (this.unifForestScale !== -1) {
+      gl.uniform1f(this.unifForestScale, forestScale);
     }
   }
 

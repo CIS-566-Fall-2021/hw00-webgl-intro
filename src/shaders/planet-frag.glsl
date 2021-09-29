@@ -19,7 +19,7 @@ uniform highp float u_Time;
 // Procedural Controls
 uniform highp float terrainFreq;    // Sets the frequency of noise that outputs terrain elevations
 uniform highp float earthToAlien;    // 0.0 -> earth color palette, 1.0 -> alien color palette
-uniform highp float brushScale;    // 0.0 -> earth color palette, 1.0 -> alien color palette
+uniform highp float forestScale;    // 0.0 -> earth color palette, 1.0 -> alien color palette
 
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
@@ -198,14 +198,14 @@ float pnoise(in vec3 coord)
     return mix(z0, z1, wz);
 }	
 
-// Brush noise function
-float brushNoise(vec3 noiseInput) {
-    float smallBrushFreq = 30.0 * brushScale;
-    float largeBrushFreq = 25.0 * brushScale;
-    float smallBrushNoise = fbm(smallBrushFreq * noiseInput + 20.0, 5);
-    float largeBrushNoise = 1.0 - pnoise(largeBrushFreq * noiseInput);
-    float sizeNoise = fbm(smallBrushFreq - largeBrushFreq * noiseInput + 20.0, 7);
-    return mix(smallBrushNoise, largeBrushNoise, sizeNoise);
+// Forest noise function
+float forestNoise(vec3 noiseInput) {
+    float smallForestFreq = 30.0 * forestScale;
+    float largeForestFreq = 25.0 * forestScale;
+    float smallForestNoise = fbm(smallForestFreq * noiseInput + 20.0, 5);
+    float largeForestNoise = 1.0 - pnoise(largeForestFreq * noiseInput);
+    float sizeNoise = fbm(smallForestFreq - largeForestFreq * noiseInput + 20.0, 7);
+    return mix(smallForestNoise, largeForestNoise, sizeNoise);
 }
 
 float GetBias(float time, float bias) {
@@ -267,14 +267,6 @@ void main()
 
     vec3 surfaceColor = vec3(noise);
 
-    // // Creates brush
-    // float smallBrushFreq = 30.0;
-    // float largeBrushFreq = 25.0;
-    // float smallBrushNoise = fbm(smallBrushFreq * noiseInput + 20.0, 5);
-    // float largeBrushNoise = 1.0 - pnoise(largeBrushFreq * noiseInput);
-    // float sizeNoise = fbm(smallBrushFreq - largeBrushFreq * noiseInput + 20.0, 7);
-    // float brushNoise = mix(smallBrushNoise, largeBrushNoise, sizeNoise);
-
     // Earth color palette
     vec3 waterCol_e = rgb(10.0, 145.0, 175.0);
     vec3 deepWaterCol_e = rgb(0.0, 36.0, 118.0) * waterCol_e;
@@ -322,19 +314,19 @@ void main()
     }
 
     // Creates land level
-    float brushNoise = brushNoise(noiseInput);
+    float forestNoise = forestNoise(noiseInput);
     if (noise > 0.48 && noise < 0.5) {
         float x = GetBias((noise - 0.48) / 0.02, 0.3);
         surfaceColor = mix(dirtCol, beachCol, x);
     } else if (noise > 0.4 && noise < 0.48) {
         float x = GetGain((noise - 0.4) / 0.08, 0.4);
-        surfaceColor = mix(landCol * brushNoise, deepLandCol, x);
+        surfaceColor = mix(landCol * forestNoise, deepLandCol, x);
     }
     // Creates mountain level
     float mountainNoise = fbm(10.0 * noiseInput + 20.0, 3);
     if (noise > 0.37 && noise < 0.4) {
         float x = GetGain((noise - 0.37) / 0.03, mountainNoise);
-        surfaceColor = mix(deepMountainCol, landCol * brushNoise, x);
+        surfaceColor = mix(deepMountainCol, landCol * forestNoise, x);
     } else if (noise > 0.32 && noise < 0.37) {
         float x = GetGain((noise - 0.32) / 0.05, mountainNoise);
         spec = mix(pow(diffuseTerm, 64.0), 0.0, x);
@@ -353,6 +345,6 @@ void main()
 
                                                     
     // Compute final shaded color
-    //out_Col = vec4(surfaceColor.rgb * lightIntensity +  (diffuseTerm / 2.0) * spec, diffuseColor.a);
-    out_Col = vec4(surfaceColor.rgb, diffuseColor.a);
+    out_Col = vec4(surfaceColor.rgb * lightIntensity +  (diffuseTerm / 2.0) * spec, diffuseColor.a);
+    //out_Col = vec4(surfaceColor.rgb, diffuseColor.a);
 }

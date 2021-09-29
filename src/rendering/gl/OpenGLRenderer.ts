@@ -9,8 +9,9 @@ class OpenGLRenderer {
   constructor(public canvas: HTMLCanvasElement) {
   }
 
-  setClearColor(r: number, g: number, b: number, a: number) {
-    gl.clearColor(r, g, b, a);
+  setClearColor(color: vec4) {
+    let black = vec4.fromValues(0.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, 1.0);
+    gl.clearColor(color[0], color[1], color[2], color[3]);
   }
 
   setSize(width: number, height: number) {

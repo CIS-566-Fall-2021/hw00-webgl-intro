@@ -25,7 +25,7 @@ uniform vec4 center;
 
 // Procedural Controls
 uniform highp float terrainFreq;    // Sets the frequency of noise that outputs terrain elevations
-uniform highp float brushScale;
+uniform highp float forestScale;    // Sets the density of the forest
 
 in vec4 vs_Pos;             // The array of vertex positions passed to the shader
 
@@ -45,7 +45,6 @@ out vec3 p4;
 
 const vec4 lightPos = vec4(5, 5, 3, 1); //The position of our virtual light, which is used to compute the shading of
                                         //the geometry in the fragment shader.
-
 
 // FBM Noise ------------------------------------
 float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
@@ -113,21 +112,7 @@ float noise3(float x) {
 	return mix(hash(i), hash(i + 1.0), u);
 }
 
-float GetBias(float time, float bias) {
-    return (time / ((((1.0/bias) - 2.0) * (1.0 - time)) + 1.0));
-}
-
-float GetGain(float time, float gain) {
-    if (time < 0.5) {
-        return GetBias(time * 2.0, gain) / 2.0;
-    } else {
-        return GetBias(time * 2.0 - 1.0, 1.0 - gain) / 2.0 + 0.5;
-    }
-}
-vec3 rgb(float r, float g, float b) {
-    return vec3(r / 255.0, g / 255.0, b / 255.0);
-}
-
+// Perlin Noise ------------------------------
 float map(float value, float old_lo, float old_hi, float new_lo, float new_hi)
 {
 	float old_range = old_hi - old_lo;
@@ -139,19 +124,11 @@ float map(float value, float old_lo, float old_hi, float new_lo, float new_hi)
 	}
 }
 
-/**
- * The canonical GLSL hash function
- */
 float hash1(float x)
 {
 	return fract(sin(x) * 43758.5453123);
 }
 
-/** 
- * Nothing is mathematically sound about anything below: 
- * I just chose values based on experimentation and some 
- * intuitions I have about what makes a good hash function
- */
 vec3 gradient(vec3 cell)
 {
 	float h_i = hash1(cell.x);
@@ -219,16 +196,31 @@ float pnoise(in vec3 coord)
     float z1 = mix(y1, y3, wy);
     
     return mix(z0, z1, wz);
-}	
+}
 
-// Brush noise function
-float brushNoise(vec3 noiseInput) {
-    float smallBrushFreq = 30.0 * brushScale;
-    float largeBrushFreq = 25.0 * brushScale;
-    float smallBrushNoise = fbm(smallBrushFreq * noiseInput + 20.0, 5);
-    float largeBrushNoise = 1.0 - pnoise(largeBrushFreq * noiseInput);
+float GetBias(float time, float bias) {
+    return (time / ((((1.0/bias) - 2.0) * (1.0 - time)) + 1.0));
+}
+
+float GetGain(float time, float gain) {
+    if (time < 0.5) {
+        return GetBias(time * 2.0, gain) / 2.0;
+    } else {
+        return GetBias(time * 2.0 - 1.0, 1.0 - gain) / 2.0 + 0.5;
+    }
+}
+vec3 rgb(float r, float g, float b) {
+    return vec3(r / 255.0, g / 255.0, b / 255.0);
+}
+
+// Forest noise function
+float forestNoise(vec3 noiseInput) {
+    float smallForestFreq = 30.0 * forestScale;
+    float largeForestFreq = 25.0 * forestScale;
+    float smallForestNoise = fbm(smallForestFreq * noiseInput + 20.0, 5);
+    float largeForestNoise = 1.0 - pnoise(largeForestFreq * noiseInput);
     float sizeNoise = fbm(noiseInput + 20.0, 7);
-    return mix(smallBrushNoise, largeBrushNoise, sizeNoise);
+    return mix(smallForestNoise, largeForestNoise, sizeNoise);
 }
 
 // Calculates the elevation of a given point based on its noise value
@@ -255,20 +247,20 @@ float getElevation(vec3 noiseInput) {
     }
 
     // Creates land level
-    float brushNoise = brushNoise(noiseInput);
+    float forestNoise = forestNoise(noiseInput);
     if (noise > 0.48 && noise < 0.5) {
         float x = GetBias((noise - 0.48) / 0.02, 0.7);
         elevation = mix(landElevation, beachElevation, x);
     } else if (noise > 0.4 && noise < 0.48) {
         float x = GetGain((noise - 0.4) / 0.08, 0.9);
-        elevation = mix(landElevation * ((brushNoise * 0.08) + landElevation), landElevation, x);
+        elevation = mix(landElevation * ((forestNoise * 0.08) + landElevation), landElevation, x);
     }
 
     // Creates mountain level
     float mountainNoise = fbm(10.0 * noiseInput + 20.0, 3);
     if (noise > 0.37 && noise < 0.4) {
         float x = GetBias((noise - 0.37) / 0.03, 0.9);
-        elevation =  mix(mountElevation1, landElevation * ((brushNoise * 0.08) + landElevation), x);
+        elevation =  mix(mountElevation1, landElevation * ((forestNoise * 0.08) + landElevation), x);
     } else if (noise < 0.37) {
         float x = GetGain(noise / 0.37, mountainNoise);
         elevation =  mix(mountElevation2, mountElevation1, x);

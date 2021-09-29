@@ -30,7 +30,7 @@ let cubeColor: vec4 = vec4.fromValues(1, 0, 1, 1);
 // Procedural Controls
 let terrainFreq: number = 1.0;
 let earthToAlien: number = 0.0;
-let brushScale: number = 0.2;
+let forestScale: number = 0.2;
 
 let time: number = 0;
 
@@ -55,7 +55,7 @@ function main() {
   gui.add(controls, 'tesselations', 0, 8).step(1);
   gui.add(controls, 'terrain frequency', 1.0, 3).step(0.05).onChange(function() { terrainFreq = controls['terrain frequency'] });
   gui.add(controls, 'earth to alien', 0.0, 1.0).step(0.05).onChange(function() { earthToAlien = controls['earth to alien'] });
-  gui.add(controls, 'forest density', 0.0, 1.0).step(0.05).onChange(function() { brushScale = controls['forest density'] });
+  gui.add(controls, 'forest density', 0.0, 1.0).step(0.05).onChange(function() { forestScale = controls['forest density'] });
   gui.add(controls, 'Load Scene');
 
   // get canvas and webgl context
@@ -74,7 +74,10 @@ function main() {
   const camera = new Camera(vec3.fromValues(0, 0, 5), vec3.fromValues(0, 0, 0));
 
   const renderer = new OpenGLRenderer(canvas);
-  renderer.setClearColor(0.2, 0.2, 0.2, 1);
+  
+  // Create starry outerspace clear color
+  let darkBlue = vec4.fromValues(0.0 / 11.0, 0.0 / 255.0, .0 / 255.0, 1);
+  renderer.setClearColor(darkBlue);
   gl.enable(gl.DEPTH_TEST);
 
   const lambert = new ShaderProgram([
@@ -99,7 +102,7 @@ function main() {
     planet_shader.setCenter(icosphere.center);
     planet_shader.setTerrainFreq(terrainFreq);
     planet_shader.setEarthToAlien(earthToAlien);
-    planet_shader.setBrushScale(brushScale);
+    planet_shader.setForestScale(forestScale);
 
     time++;
 
