@@ -15,6 +15,7 @@ precision highp float;
 uniform vec4 u_Color; // The color with which to render this instance of geometry.
 
 uniform highp float u_Time;
+uniform vec4 u_Camera;
 
 // Procedural Controls
 uniform highp float terrainFreq;    // Sets the frequency of noise that outputs terrain elevations
@@ -28,53 +29,112 @@ in vec4 fs_LightVec;
 in vec4 fs_Col;
 in vec4 fs_Pos;
 
-in vec3 p1;
-in vec3 p2;
-in vec3 p3;
-in vec3 p4;
-
 out vec4 out_Col; // This is the final output color that you will see on your
                   // screen for the pixel that is currently being processed.
 
 
 // FBM Noise ------------------------------------
-
-float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
-vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
-vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
-
-float noise(vec3 p){
-    vec3 a = floor(p);
-    vec3 d = p - a;
-    d = d * d * (3.0 - 2.0 * d);
-
-    vec4 b = a.xxyy + vec4(0.0, 1.0, 0.0, 1.0);
-    vec4 k1 = perm(b.xyxy);
-    vec4 k2 = perm(k1.xyxy + b.zzww);
-
-    vec4 c = k2 + a.zzzz;
-    vec4 k3 = perm(c);
-    vec4 k4 = perm(c + 1.0);
-
-    vec4 o1 = fract(k3 * (1.0 / 41.0));
-    vec4 o2 = fract(k4 * (1.0 / 41.0));
-
-    vec4 o3 = o2 * d.z + o1 * (1.0 - d.z);
-    vec2 o4 = o3.yw * d.x + o3.xz * (1.0 - d.x);
-
-    return o4.y * d.y + o4.x * (1.0 - d.y);
+float noise3D(vec3 p)
+{
+	return fract(sin(dot(p ,vec3(12.9898,78.233,128.852))) * 43758.5453)*2.0-1.0;
 }
 
-float fbm(vec3 x , int num_octaves) {
-	float v = 0.0;
-	float a = 0.5;
-	vec3 shift = vec3(100);
-	for (int i = 0; i < num_octaves; ++i) {
-		v += a * noise(x);
-		x = x * 2.0 + shift;
-		a *= 0.5;
+float simplex3D(vec3 p)
+{
+	
+	float f3 = 1.0/3.0;
+	float s = (p.x+p.y+p.z)*f3;
+	int i = int(floor(p.x+s));
+	int j = int(floor(p.y+s));
+	int k = int(floor(p.z+s));
+	
+	float g3 = 1.0/6.0;
+	float t = float((i+j+k))*g3;
+	float x0 = float(i)-t;
+	float y0 = float(j)-t;
+	float z0 = float(k)-t;
+	x0 = p.x-x0;
+	y0 = p.y-y0;
+	z0 = p.z-z0;
+	
+	int i1,j1,k1;
+	int i2,j2,k2;
+	
+	if(x0>=y0)
+	{
+		if(y0>=z0){ i1=1; j1=0; k1=0; i2=1; j2=1; k2=0; } // X Y Z order
+		else if(x0>=z0){ i1=1; j1=0; k1=0; i2=1; j2=0; k2=1; } // X Z Y order
+		else { i1=0; j1=0; k1=1; i2=1; j2=0; k2=1; }  // Z X Z order
 	}
-	return v;
+	else 
+	{ 
+		if(y0<z0) { i1=0; j1=0; k1=1; i2=0; j2=1; k2=1; } // Z Y X order
+		else if(x0<z0) { i1=0; j1=1; k1=0; i2=0; j2=1; k2=1; } // Y Z X order
+		else { i1=0; j1=1; k1=0; i2=1; j2=1; k2=0; } // Y X Z order
+	}
+	
+	float x1 = x0 - float(i1) + g3; 
+	float y1 = y0 - float(j1) + g3;
+	float z1 = z0 - float(k1) + g3;
+	float x2 = x0 - float(i2) + 2.0*g3; 
+	float y2 = y0 - float(j2) + 2.0*g3;
+	float z2 = z0 - float(k2) + 2.0*g3;
+	float x3 = x0 - 1.0 + 3.0*g3; 
+	float y3 = y0 - 1.0 + 3.0*g3;
+	float z3 = z0 - 1.0 + 3.0*g3;	
+
+	vec3 ijk0 = vec3(i,j,k);
+	vec3 ijk1 = vec3(i+i1,j+j1,k+k1);	
+	vec3 ijk2 = vec3(i+i2,j+j2,k+k2);
+	vec3 ijk3 = vec3(i+1,j+1,k+1);	
+
+	vec3 gr0 = normalize(vec3(noise3D(ijk0),noise3D(ijk0*2.01),noise3D(ijk0*2.02)));
+	vec3 gr1 = normalize(vec3(noise3D(ijk1),noise3D(ijk1*2.01),noise3D(ijk1*2.02)));
+	vec3 gr2 = normalize(vec3(noise3D(ijk2),noise3D(ijk2*2.01),noise3D(ijk2*2.02)));
+	vec3 gr3 = normalize(vec3(noise3D(ijk3),noise3D(ijk3*2.01),noise3D(ijk3*2.02)));
+
+	float n0 = 0.0;
+	float n1 = 0.0;
+	float n2 = 0.0;
+	float n3 = 0.0;
+
+	float t0 = 0.5 - x0*x0 - y0*y0 - z0*z0;
+	if(t0>=0.0)
+	{
+		t0*=t0;
+		n0 = t0 * t0 * dot(gr0, vec3(x0, y0, z0));
+	}
+	float t1 = 0.5 - x1*x1 - y1*y1 - z1*z1;
+	if(t1>=0.0)
+	{
+		t1*=t1;
+		n1 = t1 * t1 * dot(gr1, vec3(x1, y1, z1));
+	}
+	float t2 = 0.5 - x2*x2 - y2*y2 - z2*z2;
+	if(t2>=0.0)
+	{
+		t2 *= t2;
+		n2 = t2 * t2 * dot(gr2, vec3(x2, y2, z2));
+	}
+	float t3 = 0.5 - x3*x3 - y3*y3 - z3*z3;
+	if(t3>=0.0)
+	{
+		t3 *= t3;
+		n3 = t3 * t3 * dot(gr3, vec3(x3, y3, z3));
+	}
+	return 96.0*(n0+n1+n2+n3);
+	
+}
+
+float fbm(vec3 p)
+{
+	float f;
+    f  = 0.50000*simplex3D( p ); p = p*2.01;
+    f += 0.25000*simplex3D( p ); p = p*2.02;
+    f += 0.12500*simplex3D( p ); p = p*2.03;
+    f += 0.06250*simplex3D( p ); p = p*2.04;
+    f += 0.03125*simplex3D( p );
+	return f*0.5+0.5;
 }
 
 // Noise2 ------------------------------------
@@ -202,9 +262,9 @@ float pnoise(in vec3 coord)
 float forestNoise(vec3 noiseInput) {
     float smallForestFreq = 30.0 * forestScale;
     float largeForestFreq = 25.0 * forestScale;
-    float smallForestNoise = fbm(smallForestFreq * noiseInput + 20.0, 5);
+    float smallForestNoise = fbm(smallForestFreq * noiseInput + 20.0);
     float largeForestNoise = 1.0 - pnoise(largeForestFreq * noiseInput);
-    float sizeNoise = fbm(smallForestFreq - largeForestFreq * noiseInput + 20.0, 7);
+    float sizeNoise = fbm(smallForestFreq - largeForestFreq * noiseInput + 20.0);
     return mix(smallForestNoise, largeForestNoise, sizeNoise);
 }
 
@@ -245,25 +305,102 @@ mat4 rotationZ( in float angle ) {
 							0,				0,		0,	1);
 }
 
+// Calculates the elevation of a given point based on its noise value
+float getElevation(vec3 noiseInput) {
+
+    float noise = fbm(noiseInput);
+
+    float waterElevation = 0.9;
+    float beachElevation = 0.93;
+    float landElevation = 1.0;
+    float mountElevation1 = 1.05;
+    float mountElevation2 = 1.7;
+    float mountElevation3 = 1.7;
+    
+    float waveNoise= noise2(10.0 * noise2((0.0006 * u_Time) + 3.0 * vec3(noiseInput) + noiseInput) + noiseInput);
+    float elevation = mix(waterElevation, waterElevation + 0.05, waveNoise);
+
+    //float elevation = waterElevation;
+    
+    // Creates beach level
+    if (noise > 0.4 && noise < 0.52) {
+        elevation = beachElevation;
+    } else if (noise > 0.52 && noise < 0.53) {
+        float x = GetBias((noise - 0.52) / 0.01, 0.3);
+        elevation = mix(beachElevation, waterElevation, x);
+    }
+
+    // Creates land level
+    float forestNoise = forestNoise(noiseInput);
+    if (noise > 0.48 && noise < 0.5) {
+        float x = GetBias((noise - 0.48) / 0.02, 0.7);
+        elevation = mix(landElevation, beachElevation, x);
+    } else if (noise > 0.4 && noise < 0.48) {
+        float x = GetGain((noise - 0.4) / 0.08, 0.9);
+        elevation = mix(landElevation * ((forestNoise * 0.08) + landElevation), landElevation, x);
+    }
+
+    // Creates mountain level
+    float mountainNoise = fbm(10.0 * noiseInput + 20.0);
+    if (noise > 0.37 && noise < 0.4) {
+        float x = GetBias((noise - 0.37) / 0.03, 0.5);
+        elevation =  mix(landElevation * ((forestNoise * 0.08) + landElevation), mountElevation1, x);
+    } else if (noise < 0.37) {
+        float x = GetGain(noise / 0.37, mountainNoise);
+        elevation =  mix(mountElevation2, mountElevation1, x);
+    }
+
+    return elevation;
+
+}
+
 void main()
 {
     // Material base color (before shading)
     vec4 diffuseColor = u_Color;
     vec3 noiseInput = fs_Pos.xyz * terrainFreq;
 
-    float noise = fbm(noiseInput, 3);
+    float noise = fbm(noiseInput);
 
     // Calculate new normal based on elevated neighbors passed in from vertex shader
-    // vec4 norm_deformed = vec4(cross(normalize(p1 - p3), normalize(p2 - p4)), 1.0);
-    // out_Col = norm_deformed;
+    // Get tangent and bitangent vectors
+    vec3 tangent = cross(vec3(0.0, 1.0, 0.0), fs_Nor.xyz);
+    vec3 bitangent = cross(fs_Nor.xyz, tangent);
+
+    // Get offset amount for epsilon distance away
+    float e = 0.00001;
+
+    // Get neighbors
+    vec3 p1 = noiseInput + vec3(e) * tangent;
+    vec3 p2 = noiseInput + vec3(e) * bitangent;
+    vec3 p3 = noiseInput - vec3(e) * tangent;
+    vec3 p4 = noiseInput - vec3(e) * bitangent;
+
+    float p1_e =  getElevation(p1);
+    float p2_e =  getElevation(p2);
+    float p3_e =  getElevation(p3);
+    float p4_e =  getElevation(p4);
+
+    vec3 p1_deformed = p1 + fs_Nor.xyz * p1_e;
+    vec3 p2_deformed = p2 + fs_Nor.xyz * p2_e;
+    vec3 p3_deformed = p3 + fs_Nor.xyz * p3_e;
+    vec3 p4_deformed = p4 + fs_Nor.xyz * p4_e;
+
+    vec4 norm_deformed = vec4(cross(normalize(p1_deformed - p3_deformed), normalize(p2_deformed - p4_deformed)), 1.0);
+    // out_Col = norm_deformed * 0.5 + 0.5;
     // return;
 
     // Calculate the diffuse term for Lambert shading
-    vec4 rotated_lightVec = fs_LightVec * rotationY(0.003 * u_Time);
-    float diffuseTerm = dot(normalize(fs_Nor), normalize(rotated_lightVec)) * 10.0;
+    vec4 rotated_lightVec = fs_LightVec * rotationY(0.008 * u_Time);
+    float diffuseTerm = dot(normalize(norm_deformed), normalize(rotated_lightVec)) * 10.0;
     diffuseTerm = clamp(diffuseTerm, 0.0, 1.0);
+
     // Initialize specular value so it can be conditionally changed for mountains
+    vec3 view = normalize(u_Camera.xyz - fs_Pos.xyz);
+    vec3 light_distance = normalize(fs_LightVec.xyz - fs_Pos.xyz);
+    vec3 h = (light_distance + view) / 2.0;
     float spec = 0.0;
+    float distance = length(fs_LightVec);
 
     vec3 surfaceColor = vec3(noise);
 
@@ -322,17 +459,21 @@ void main()
         float x = GetGain((noise - 0.4) / 0.08, 0.4);
         surfaceColor = mix(landCol * forestNoise, deepLandCol, x);
     }
+
     // Creates mountain level
-    float mountainNoise = fbm(10.0 * noiseInput + 20.0, 3);
+    float mountainNoise = fbm(10.0 * noiseInput + 20.0);
     if (noise > 0.37 && noise < 0.4) {
         float x = GetGain((noise - 0.37) / 0.03, mountainNoise);
         surfaceColor = mix(deepMountainCol, landCol * forestNoise, x);
     } else if (noise > 0.32 && noise < 0.37) {
         float x = GetGain((noise - 0.32) / 0.05, mountainNoise);
-        spec = mix(pow(diffuseTerm, 64.0), 0.0, x);
+        float shininess = 3.0;
+        float specVal = clamp((pow(dot(h, norm_deformed.xyz), shininess)), 0.0, 1.0);
+        spec = mix(specVal, 0.0, x);
         surfaceColor = mix(mountainCol, deepMountainCol, x);
     } else if (noise < 0.4) {
-        spec = pow(diffuseTerm, 64.0);
+        float shininess = 3.0;
+        spec = clamp((pow(dot(h, norm_deformed.xyz), shininess)), 0.0, 1.0);
         float x = GetGain(noise / 0.32, mountainNoise);
         surfaceColor = mix(white, mountainCol, x);
     }
@@ -345,6 +486,6 @@ void main()
 
                                                     
     // Compute final shaded color
-    //out_Col = vec4(surfaceColor.rgb * lightIntensity +  (diffuseTerm / 2.0) * spec, diffuseColor.a);
-    out_Col = vec4(surfaceColor.rgb, diffuseColor.a);
+    out_Col = vec4(surfaceColor.rgb * lightIntensity + spec, diffuseColor.a);
+    //out_Col = vec4(surfaceColor.rgb, diffuseColor.a);
 }

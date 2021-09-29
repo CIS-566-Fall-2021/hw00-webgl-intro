@@ -1,4 +1,4 @@
-import {vec4, mat4} from 'gl-matrix';
+import {vec3, vec4, mat4} from 'gl-matrix';
 import Drawable from './Drawable';
 import {gl} from '../../globals';
 
@@ -30,7 +30,8 @@ class ShaderProgram {
   unifViewProj: WebGLUniformLocation;
   unifColor: WebGLUniformLocation;
   unifTime: WebGLUniformLocation;
-  unifCenter: WebGLUniformLocation;
+  unifCamera: WebGLUniformLocation;
+
   unifTerrainFreq: WebGLUniformLocation;
   unifEarthToAlien: WebGLUniformLocation;
   unifForestScale: WebGLUniformLocation;
@@ -54,7 +55,7 @@ class ShaderProgram {
     this.unifViewProj   = gl.getUniformLocation(this.prog, "u_ViewProj");
     this.unifColor      = gl.getUniformLocation(this.prog, "u_Color");
     this.unifTime      = gl.getUniformLocation(this.prog, "u_Time");
-    this.unifCenter      = gl.getUniformLocation(this.prog, "u_Center");
+    this.unifCamera = gl.getUniformLocation(this.prog, "u_Camera");
 
     // Procedural Controls
     this.unifTerrainFreq = gl.getUniformLocation(this.prog, "terrainFreq");
@@ -104,10 +105,10 @@ class ShaderProgram {
     }
   }
 
-  setCenter(center: vec4) {
+  setCamera(cam: vec4) {
     this.use();
-    if (this.unifCenter !== -1) {
-      gl.uniform4fv(this.unifCenter, center);
+    if (this.unifCamera !== -1) {
+      gl.uniform4fv(this.unifCamera, cam);
     }
   }
 

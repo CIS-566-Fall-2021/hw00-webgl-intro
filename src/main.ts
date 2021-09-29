@@ -13,7 +13,7 @@ import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
 // This will be referred to by dat.GUI's functions that add GUI elements.
 const controls = {
   tesselations: 5,
-  'terrain frequency': 1.0,
+  'terrain frequency': 0.5,
   'earth to alien': 0.0,
   'forest density': 0.2,
   'Load Scene': loadScene, // A function pointer, essentially
@@ -28,7 +28,7 @@ let prevTesselations: number = 5;
 let cubeColor: vec4 = vec4.fromValues(1, 0, 1, 1);
 
 // Procedural Controls
-let terrainFreq: number = 1.0;
+let terrainFreq: number = 0.5;
 let earthToAlien: number = 0.0;
 let forestScale: number = 0.2;
 
@@ -53,7 +53,7 @@ function main() {
 
   gui.addColor(controls, 'color').onChange( function() { cubeColor = vec4.fromValues(controls.color[0] / 255, controls.color[1] / 255, controls.color[2] / 255, 1) } );;
   gui.add(controls, 'tesselations', 0, 8).step(1);
-  gui.add(controls, 'terrain frequency', 1.0, 3).step(0.05).onChange(function() { terrainFreq = controls['terrain frequency'] });
+  gui.add(controls, 'terrain frequency', 0.3, 2.0).step(0.05).onChange(function() { terrainFreq = controls['terrain frequency'] });
   gui.add(controls, 'earth to alien', 0.0, 1.0).step(0.05).onChange(function() { earthToAlien = controls['earth to alien'] });
   gui.add(controls, 'forest density', 0.0, 1.0).step(0.05).onChange(function() { forestScale = controls['forest density'] });
   gui.add(controls, 'Load Scene');
@@ -99,10 +99,10 @@ function main() {
   function tick() {
 
     planet_shader.setTime(time);
-    planet_shader.setCenter(icosphere.center);
     planet_shader.setTerrainFreq(terrainFreq);
     planet_shader.setEarthToAlien(earthToAlien);
     planet_shader.setForestScale(forestScale);
+    planet_shader.setCamera([camera.getEye()[0], camera.getEye()[1], camera.getEye()[2], 1.0]);
 
     time++;
 
