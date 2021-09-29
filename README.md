@@ -1,9 +1,15 @@
 # HW 0: Noisy Planet Part 1 (Intro to Javascript and WebGL)
 
+Live demo: https://jakelem.github.io/hw00-webgl-intro
+
 <p align="center">
-  <img width="360" height="360" src="https://user-images.githubusercontent.com/1758825/132532354-e3a45402-e484-499e-bfa7-2d73b9f2c946.png">
+<img src="Images/tofugif.gif" alt="drawing" width="350"/>
 </p>
-<p align="center">(source: Ken Perlin)</p>
+<p align= "center">
+
+
+For this project, I made a jiggly tofu. The cube vertices move along a sine wave, whose direction and amplitude are determined by the position of the mouse on the screen. The normals are offset based on a 3D FBM derivative, as described by IQ [in this article](https://www.iquilezles.org/www/articles/morenoise/morenoise.htm). FBM is also used to interpolate colors for the tofu albedo and also as a specular map. 
+
 
 ## Objective
 - Check that the tools and build configuration we will be using for the class works.
