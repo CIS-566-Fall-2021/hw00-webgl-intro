@@ -4,7 +4,7 @@ PennKey : smlee18
 
 Sources: https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83 
 
-Live Demo:
+Live Demo: https://18smlee.github.io/hw00-webgl-intro/
 
 ## Biomes
 There are four different types of terrain: ocean, beach, forest, and mountains. The elevation of a given vertex is based on a fractional brownian noise function from the above source. The lighter noise values correspond to higher elevation and the darker noise values correspond to lower elevation. 

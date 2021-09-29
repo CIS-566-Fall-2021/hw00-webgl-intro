@@ -260,7 +260,7 @@ void main()
 
     // Calculate the diffuse term for Lambert shading
     vec4 rotated_lightVec = fs_LightVec * rotationY(0.003 * u_Time);
-    float diffuseTerm = dot(normalize(fs_Nor), normalize(rotated_lightVec));
+    float diffuseTerm = dot(normalize(fs_Nor), normalize(rotated_lightVec)) * 10.0;
     diffuseTerm = clamp(diffuseTerm, 0.0, 1.0);
     // Initialize specular value so it can be conditionally changed for mountains
     float spec = 0.0;
@@ -345,6 +345,6 @@ void main()
 
                                                     
     // Compute final shaded color
-    out_Col = vec4(surfaceColor.rgb * lightIntensity +  (diffuseTerm / 2.0) * spec, diffuseColor.a);
-    //out_Col = vec4(surfaceColor.rgb, diffuseColor.a);
+    //out_Col = vec4(surfaceColor.rgb * lightIntensity +  (diffuseTerm / 2.0) * spec, diffuseColor.a);
+    out_Col = vec4(surfaceColor.rgb, diffuseColor.a);
 }
