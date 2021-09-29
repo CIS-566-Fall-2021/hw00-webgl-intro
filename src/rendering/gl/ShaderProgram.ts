@@ -1,4 +1,4 @@
-import {vec4, mat4} from 'gl-matrix';
+import {vec3,vec4, mat4} from 'gl-matrix';
 import Drawable from './Drawable';
 import {gl} from '../../globals';
 
@@ -25,11 +25,22 @@ class ShaderProgram {
   attrNor: number;
   attrCol: number;
 
+  unifTime: WebGLUniformLocation;
+  unifNoise_Con: WebGLUniformLocation;
+  unifNoise_Ridge: WebGLUniformLocation;
+  unifNoise_Mask: WebGLUniformLocation;
   unifModel: WebGLUniformLocation;
   unifModelInvTr: WebGLUniformLocation;
   unifViewProj: WebGLUniformLocation;
   unifColor: WebGLUniformLocation;
-
+  unifoceanDepthMultiplier:WebGLUniformLocation;
+  unifoceanFloorDepth:WebGLUniformLocation;
+  unifoceanFloorSmoothing:WebGLUniformLocation;
+  unifmountainBlend:WebGLUniformLocation;
+  unifCameraPos:WebGLUniformLocation;
+  unifLightPos:WebGLUniformLocation;
+  unifText:WebGLUniformLocation;
+  unifTextBool:WebGLUniformLocation;
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
 
@@ -40,14 +51,30 @@ class ShaderProgram {
     if (!gl.getProgramParameter(this.prog, gl.LINK_STATUS)) {
       throw gl.getProgramInfoLog(this.prog);
     }
-
+    // Vertex
     this.attrPos = gl.getAttribLocation(this.prog, "vs_Pos");
     this.attrNor = gl.getAttribLocation(this.prog, "vs_Nor");
     this.attrCol = gl.getAttribLocation(this.prog, "vs_Col");
+
+    // Camera Stuff
+    this.unifCameraPos = gl.getUniformLocation(this.prog,"u_CamPos");
     this.unifModel      = gl.getUniformLocation(this.prog, "u_Model");
     this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
     this.unifViewProj   = gl.getUniformLocation(this.prog, "u_ViewProj");
+    this.unifLightPos = gl.getUniformLocation(this.prog,"u_Light_pos");
+
+    // Customized 
     this.unifColor      = gl.getUniformLocation(this.prog, "u_Color");
+    this.unifTime      = gl.getUniformLocation(this.prog, "u_Time");
+    this.unifoceanDepthMultiplier      = gl.getUniformLocation(this.prog, "oceanDepthMultiplier");
+    this.unifoceanFloorDepth = gl.getUniformLocation(this.prog, "oceanFloorDepth");
+    this.unifoceanFloorSmoothing = gl.getUniformLocation(this.prog, "oceanFloorSmoothing");
+    this.unifmountainBlend = gl.getUniformLocation(this.prog, "mountainBlend");
+    this.unifNoise_Con = gl.getUniformLocation(this.prog, "noise_params_continent");
+    this.unifNoise_Ridge = gl.getUniformLocation(this.prog, "noise_params_ridge");
+    this.unifNoise_Mask = gl.getUniformLocation(this.prog, "noise_params_mask");
+    this.unifText       = gl.getUniformLocation(this.prog, "u_Text");
+    this.unifTextBool   =  gl.getUniformLocation(this.prog, "u_TextBool");
   }
 
   use() {
@@ -56,7 +83,27 @@ class ShaderProgram {
       activeProgram = this.prog;
     }
   }
-
+  setCam(color: vec4) {
+    this.use();
+    if (this.unifCameraPos !== -1) {
+      gl.uniform4fv(this.unifCameraPos, color);
+    }
+  }
+  setLight(color: vec4) {
+    this.use();
+    if (this.unifLightPos !== -1) {
+      gl.uniform4fv(this.unifLightPos, color);
+    }
+  }
+  
+  setText(text: WebGLTexture){
+    this.use();
+    if (this.unifText !== -1) {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, text);
+      gl.uniform1i(this.unifText, 0);
+    }
+  }
   setModelMatrix(model: mat4) {
     this.use();
     if (this.unifModel !== -1) {
@@ -84,6 +131,65 @@ class ShaderProgram {
       gl.uniform4fv(this.unifColor, color);
     }
   }
+
+  // time
+  
+  setTime(time: number) {
+    this.use();
+    if (this.unifTime !== -1) {
+      gl.uniform1f(this.unifTime, time);
+    }
+  }
+  setoceanDepthMultiplier(oceanDepthMultiplier: number) {
+    this.use();
+    if (this.unifoceanDepthMultiplier !== -1) {
+      gl.uniform1f(this.unifoceanDepthMultiplier, oceanDepthMultiplier);
+    }
+  }
+
+  setoceanFloorDepth(oceanFloorDepth: number) {
+    this.use();
+    if (this.unifoceanFloorDepth !== -1) {
+      gl.uniform1f(this.unifoceanFloorDepth, oceanFloorDepth);
+    }
+  }
+  setoceanFloorSmoothing(oceanFloorSmoothing: number) {
+    this.use();
+    if (this.unifoceanFloorSmoothing !== -1) {
+      gl.uniform1f(this.unifoceanFloorSmoothing,oceanFloorSmoothing);
+    }
+  }
+  setmountainBlend(mountainBlend: number) {
+    this.use();
+    if (this.unifmountainBlend !== -1) {
+      gl.uniform1f(this.unifmountainBlend, mountainBlend);
+    }
+  }
+  setTextBool(n: number) {
+    this.use();
+    if (this.unifTextBool !== -1) {
+      gl.uniform1f(this.unifTextBool, n);
+    }
+  }
+  setNoise_Con(noise_par: Float32Array) {
+    this.use();
+    if (this.unifNoise_Con !== -1) {
+      gl.uniform1fv(this.unifNoise_Con, noise_par);
+    }
+  }
+  setNoise_Ridge(noise_par: Float32Array) {
+    this.use();
+    if (this.unifNoise_Ridge !== -1) {
+      gl.uniform1fv(this.unifNoise_Ridge, noise_par);
+    }
+  }
+  setNoise_Mask(noise_par: Float32Array) {
+    this.use();
+    if (this.unifNoise_Mask!== -1) {
+      gl.uniform1fv(this.unifNoise_Mask, noise_par);
+    }
+  }
+
 
   draw(d: Drawable) {
     this.use();

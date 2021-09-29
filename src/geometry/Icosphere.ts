@@ -13,7 +13,38 @@ class Icosphere extends Drawable {
     super(); // Call the constructor of the super class. This is required.
     this.center = vec4.fromValues(center[0], center[1], center[2], 1);
   }
+  loadTexture(url: string) {
+    const texture = this.generateTex();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
 
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const width = 1;
+    const height = 1;
+    const border = 0;
+    const srcFormat = gl.RGBA;
+    const srcType = gl.UNSIGNED_BYTE;
+    const pixel = new Uint8Array([0, 0, 255, 255]);  // opaque blue
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                  width, height, border, srcFormat, srcType,
+                  pixel);
+
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = function() {
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                    srcFormat, srcType, image);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+ 
+    };
+    image.src = url;
+
+    this.texture = texture;
+    console.log(this.texture);
+  }
   create() {
     const X = 0.525731112119133606;
     const Z = 0.850650808352039932;
