@@ -25,6 +25,7 @@ uniform vec4 center;
 
 // Procedural Controls
 uniform highp float terrainFreq;    // Sets the frequency of noise that outputs terrain elevations
+uniform highp float brushScale;
 
 in vec4 vs_Pos;             // The array of vertex positions passed to the shader
 
@@ -45,9 +46,8 @@ out vec3 p4;
 const vec4 lightPos = vec4(5, 5, 3, 1); //The position of our virtual light, which is used to compute the shading of
                                         //the geometry in the fragment shader.
 
-// FBM Noise ------------------------------------
-#define NUM_OCTAVES 3
 
+// FBM Noise ------------------------------------
 float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
 vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
 vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
@@ -74,11 +74,11 @@ float noise(vec3 p){
     return o4.y * d.y + o4.x * (1.0 - d.y);
 }
 
-float fbm(vec3 x) {
+float fbm(vec3 x, int num_octaves) {
 	float v = 0.0;
 	float a = 0.5;
 	vec3 shift = vec3(100);
-	for (int i = 0; i < NUM_OCTAVES; ++i) {
+	for (int i = 0; i < num_octaves; ++i) {
 		v += a * noise(x);
 		x = x * 2.0 + shift;
 		a *= 0.5;
@@ -128,10 +128,113 @@ vec3 rgb(float r, float g, float b) {
     return vec3(r / 255.0, g / 255.0, b / 255.0);
 }
 
-// Calculates the elevation of a given point based on its noise value
-float getElevation(float noise) {
+float map(float value, float old_lo, float old_hi, float new_lo, float new_hi)
+{
+	float old_range = old_hi - old_lo;
+    if (old_range == 0.0) {
+	    return new_lo; 
+	} else {
+	    float new_range = new_hi - new_lo;  
+	    return (((value - old_lo) * new_range) / old_range) + new_lo;
+	}
+}
 
-    vec3 noiseInput = fs_Pos.xyz * terrainFreq;
+/**
+ * The canonical GLSL hash function
+ */
+float hash1(float x)
+{
+	return fract(sin(x) * 43758.5453123);
+}
+
+/** 
+ * Nothing is mathematically sound about anything below: 
+ * I just chose values based on experimentation and some 
+ * intuitions I have about what makes a good hash function
+ */
+vec3 gradient(vec3 cell)
+{
+	float h_i = hash1(cell.x);
+	float h_j = hash1(cell.y + pow(h_i, 3.0));
+	float h_k = hash1(cell.z + pow(h_j, 5.0));
+    float ii = map(fract(h_i + h_j + h_k), 0.0, 1.0, -1.0, 1.0);
+    float jj = map(fract(h_j + h_k), 0.0, 1.0, -1.0, 1.0);
+	float kk = map(h_k, 0.0, 1.0, -1.0, 1.0);
+    return normalize(vec3(ii, jj, kk));
+}
+
+/**
+ * Perlin's "ease-curve" fade function
+ */
+float fade(float t)
+{
+   	float t3 = t * t * t;
+    float t4 = t3 * t;
+    float t5 = t4 * t;
+    return (6.0 * t5) - (15.0 * t4) + (10.0 * t3);        
+}    
+
+float pnoise(in vec3 coord)
+{
+    vec3 cell = floor(coord);
+    vec3 unit = fract(coord);
+   
+    vec3 unit_000 = unit;
+    vec3 unit_100 = unit - vec3(1.0, 0.0, 0.0);
+    vec3 unit_001 = unit - vec3(0.0, 0.0, 1.0);
+    vec3 unit_101 = unit - vec3(1.0, 0.0, 1.0);
+    vec3 unit_010 = unit - vec3(0.0, 1.0, 0.0);
+    vec3 unit_110 = unit - vec3(1.0, 1.0, 0.0);
+    vec3 unit_011 = unit - vec3(0.0, 1.0, 1.0);
+    vec3 unit_111 = unit - 1.0;
+
+    vec3 c_000 = cell;
+    vec3 c_100 = cell + vec3(1.0, 0.0, 0.0);
+    vec3 c_001 = cell + vec3(0.0, 0.0, 1.0);
+    vec3 c_101 = cell + vec3(1.0, 0.0, 1.0);
+    vec3 c_010 = cell + vec3(0.0, 1.0, 0.0);
+    vec3 c_110 = cell + vec3(1.0, 1.0, 0.0);
+    vec3 c_011 = cell + vec3(0.0, 1.0, 1.0);
+    vec3 c_111 = cell + 1.0;
+
+    float wx = fade(unit.x);
+    float wy = fade(unit.y);
+    float wz = fade(unit.z);
+ 
+    float x000 = dot(gradient(c_000), unit_000);
+	float x100 = dot(gradient(c_100), unit_100);
+	float x001 = dot(gradient(c_001), unit_001);
+	float x101 = dot(gradient(c_101), unit_101);
+	float x010 = dot(gradient(c_010), unit_010);
+	float x110 = dot(gradient(c_110), unit_110);
+	float x011 = dot(gradient(c_011), unit_011);
+	float x111 = dot(gradient(c_111), unit_111);
+   
+    float y0 = mix(x000, x100, wx);
+    float y1 = mix(x001, x101, wx);
+    float y2 = mix(x010, x110, wx);
+    float y3 = mix(x011, x111, wx);
+    
+	float z0 = mix(y0, y2, wy);
+    float z1 = mix(y1, y3, wy);
+    
+    return mix(z0, z1, wz);
+}	
+
+// Brush noise function
+float brushNoise(vec3 noiseInput) {
+    float smallBrushFreq = 30.0 * brushScale;
+    float largeBrushFreq = 25.0 * brushScale;
+    float smallBrushNoise = fbm(smallBrushFreq * noiseInput + 20.0, 5);
+    float largeBrushNoise = 1.0 - pnoise(largeBrushFreq * noiseInput);
+    float sizeNoise = fbm(noiseInput + 20.0, 7);
+    return mix(smallBrushNoise, largeBrushNoise, sizeNoise);
+}
+
+// Calculates the elevation of a given point based on its noise value
+float getElevation(vec3 noiseInput) {
+
+    float noise = fbm(noiseInput, 3);
 
     float waterElevation = 0.9;
     float beachElevation = 0.93;
@@ -141,7 +244,7 @@ float getElevation(float noise) {
     float mountElevation3 = 1.7;
 
     float waveNoise = noise2(5.0 * noise2((0.0006 * u_Time) + vec3(noiseInput) + noiseInput) + noiseInput);
-    float elevation = mix(waterElevation, waterElevation + 0.03, waveNoise);
+    float elevation = mix(waterElevation, waterElevation + 0.05, waveNoise);
 
     // Creates beach level
     if (noise > 0.4 && noise < 0.52) {
@@ -152,18 +255,20 @@ float getElevation(float noise) {
     }
 
     // Creates land level
+    float brushNoise = brushNoise(noiseInput);
     if (noise > 0.48 && noise < 0.5) {
         float x = GetBias((noise - 0.48) / 0.02, 0.7);
         elevation = mix(landElevation, beachElevation, x);
-    } else if (noise < 0.48) {
-        elevation = landElevation;
+    } else if (noise > 0.4 && noise < 0.48) {
+        float x = GetGain((noise - 0.4) / 0.08, 0.9);
+        elevation = mix(landElevation * ((brushNoise * 0.08) + landElevation), landElevation, x);
     }
 
     // Creates mountain level
-    float mountainNoise = fbm(10.0 * noiseInput + 20.0);
+    float mountainNoise = fbm(10.0 * noiseInput + 20.0, 3);
     if (noise > 0.37 && noise < 0.4) {
         float x = GetBias((noise - 0.37) / 0.03, 0.9);
-        elevation =  mix(mountElevation1, landElevation, x);
+        elevation =  mix(mountElevation1, landElevation * ((brushNoise * 0.08) + landElevation), x);
     } else if (noise < 0.37) {
         float x = GetGain(noise / 0.37, mountainNoise);
         elevation =  mix(mountElevation2, mountElevation1, x);
@@ -192,9 +297,9 @@ void main()
                                              // used to render the final positions of the geometry's vertices
 
     vec3 noiseInput = modelposition.xyz * terrainFreq;
-    float noise = fbm(noiseInput);
+    float noise = fbm(noiseInput, 3);
 
-    float elevation = getElevation(noise);                  
+    float elevation = getElevation(noiseInput);                  
 
     vec3 offsetAmount = vec3(vs_Nor) * elevation;
     vec3 noisyModelPosition = modelposition.xyz + offsetAmount;
@@ -210,8 +315,7 @@ void main()
     // Get offset amount for epsilon distance away
     float e = 0.00001;
     vec3 noiseInput_e = noisyModelPosition.xyz + vec3(e) * terrainFreq;
-    float noise_e = fbm(noiseInput);
-    float elevation_e = getElevation(noise_e);
+    float elevation_e = getElevation(noiseInput_e);
     vec3 offsetAmount_e = vec3(vs_Nor) * elevation_e;
 
     // Get neighbors 

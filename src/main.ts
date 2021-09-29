@@ -15,6 +15,7 @@ const controls = {
   tesselations: 5,
   'terrain frequency': 1.0,
   'earth to alien': 0.0,
+  'forest density': 0.2,
   'Load Scene': loadScene, // A function pointer, essentially
   color: [255, 0, 255]
 };
@@ -29,6 +30,7 @@ let cubeColor: vec4 = vec4.fromValues(1, 0, 1, 1);
 // Procedural Controls
 let terrainFreq: number = 1.0;
 let earthToAlien: number = 0.0;
+let brushScale: number = 0.2;
 
 let time: number = 0;
 
@@ -53,6 +55,7 @@ function main() {
   gui.add(controls, 'tesselations', 0, 8).step(1);
   gui.add(controls, 'terrain frequency', 1.0, 3).step(0.05).onChange(function() { terrainFreq = controls['terrain frequency'] });
   gui.add(controls, 'earth to alien', 0.0, 1.0).step(0.05).onChange(function() { earthToAlien = controls['earth to alien'] });
+  gui.add(controls, 'forest density', 0.0, 1.0).step(0.05).onChange(function() { brushScale = controls['forest density'] });
   gui.add(controls, 'Load Scene');
 
   // get canvas and webgl context
@@ -96,6 +99,7 @@ function main() {
     planet_shader.setCenter(icosphere.center);
     planet_shader.setTerrainFreq(terrainFreq);
     planet_shader.setEarthToAlien(earthToAlien);
+    planet_shader.setBrushScale(brushScale);
 
     time++;
 
