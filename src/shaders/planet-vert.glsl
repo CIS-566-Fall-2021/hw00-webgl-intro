@@ -37,6 +37,11 @@ out vec4 fs_LightVec;       // The direction in which our virtual light lies, re
 out vec4 fs_Col;            // The color of each vertex. This is implicitly passed to the fragment shader.
 out vec4 fs_Pos;
 
+out vec3 p1;                // Neighbors a tiny epsilon away from our point which we will use to calculate the deformed normal
+out vec3 p2;
+out vec3 p3; 
+out vec3 p4;
+
 const vec4 lightPos = vec4(5, 5, 3, 1); //The position of our virtual light, which is used to compute the shading of
                                         //the geometry in the fragment shader.
 
@@ -123,28 +128,10 @@ vec3 rgb(float r, float g, float b) {
     return vec3(r / 255.0, g / 255.0, b / 255.0);
 }
 
-void main()
-{
-    fs_Col = vs_Col;                         // Pass the vertex colors to the fragment shader for interpolation
+// Calculates the elevation of a given point based on its noise value
+float getElevation(float noise) {
 
-    mat3 invTranspose = mat3(u_ModelInvTr);
-    fs_Nor = vec4(invTranspose * vec3(vs_Nor), 0);          // Pass the vertex normals to the fragment shader for interpolation.
-                                                            // Transform the geometry's normals by the inverse transpose of the
-                                                            // model matrix. This is necessary to ensure the normals remain
-                                                            // perpendicular to the surface after the surface is transformed by
-                                                            // the model matrix.
-
-    vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
-
-    fs_LightVec = lightPos - modelposition;  // Compute the direction in which the light source lies
-
-    gl_Position = u_ViewProj * modelposition;// gl_Position is a built-in variable of OpenGL which is
-                                             // used to render the final positions of the geometry's vertices
-
-
-    // Creates elevated terrain
-    vec3 noiseInput = modelposition.xyz * terrainFreq;
-    float noise = fbm(noiseInput);
+    vec3 noiseInput = fs_Pos.xyz * terrainFreq;
 
     float waterElevation = 0.9;
     float beachElevation = 0.93;
@@ -155,7 +142,6 @@ void main()
 
     float waveNoise = noise2(5.0 * noise2((0.0006 * u_Time) + vec3(noiseInput) + noiseInput) + noiseInput);
     float elevation = mix(waterElevation, waterElevation + 0.03, waveNoise);
-;
 
     // Creates beach level
     if (noise > 0.4 && noise < 0.52) {
@@ -183,10 +169,54 @@ void main()
         elevation =  mix(mountElevation2, mountElevation1, x);
     }
 
+    return elevation;
+
+}
+
+void main()
+{
+    fs_Col = vs_Col;                         // Pass the vertex colors to the fragment shader for interpolation
+
+    mat3 invTranspose = mat3(u_ModelInvTr);
+    fs_Nor = vec4(invTranspose * vec3(vs_Nor), 0);          // Pass the vertex normals to the fragment shader for interpolation.
+                                                            // Transform the geometry's normals by the inverse transpose of the
+                                                            // model matrix. This is necessary to ensure the normals remain
+                                                            // perpendicular to the surface after the surface is transformed by
+                                                            // the model matrix.
+
+    vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
+
+    fs_LightVec = lightPos - modelposition;  // Compute the direction in which the light source lies
+
+    gl_Position = u_ViewProj * modelposition;// gl_Position is a built-in variable of OpenGL which is
+                                             // used to render the final positions of the geometry's vertices
+
+    vec3 noiseInput = modelposition.xyz * terrainFreq;
+    float noise = fbm(noiseInput);
+
+    float elevation = getElevation(noise);                  
+
     vec3 offsetAmount = vec3(vs_Nor) * elevation;
     vec3 noisyModelPosition = modelposition.xyz + offsetAmount;
     gl_Position = u_ViewProj * vec4(noisyModelPosition, 1.0);
     
     fs_Pos = vs_Pos;
 
+    // Calculate new normals!
+    // Get tangent and bitangent vectors
+    vec3 tangent = cross(vec3(0.0, 1.0, 0.0), fs_Nor.xyz);
+    vec3 bitangent = cross(fs_Nor.xyz, tangent);
+
+    // Get offset amount for epsilon distance away
+    float e = 0.00001;
+    vec3 noiseInput_e = noisyModelPosition.xyz + vec3(e) * terrainFreq;
+    float noise_e = fbm(noiseInput);
+    float elevation_e = getElevation(noise_e);
+    vec3 offsetAmount_e = vec3(vs_Nor) * elevation_e;
+
+    // Get neighbors 
+    p1 =  fs_Pos.xyz + vec3(e) * tangent + offsetAmount_e;
+    p2 =  fs_Pos.xyz + vec3(e) * bitangent + offsetAmount_e;
+    p3 =  fs_Pos.xyz - vec3(e) * tangent + offsetAmount_e;
+    p4 =  fs_Pos.xyz - vec3(e) * bitangent + offsetAmount_e;
 }
