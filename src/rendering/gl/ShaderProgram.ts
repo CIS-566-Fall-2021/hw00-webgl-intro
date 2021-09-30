@@ -1,4 +1,4 @@
-import {vec4, mat4} from 'gl-matrix';
+import {vec3, vec4, mat4} from 'gl-matrix';
 import Drawable from './Drawable';
 import {gl} from '../../globals';
 
@@ -29,6 +29,10 @@ class ShaderProgram {
   unifModelInvTr: WebGLUniformLocation;
   unifViewProj: WebGLUniformLocation;
   unifColor: WebGLUniformLocation;
+  unifTime: WebGLUniformLocation;
+  unifCameraPos: WebGLUniformLocation;
+  unifFbmOffset: WebGLUniformLocation;
+  unifLandWaterRatio: WebGLUniformLocation;
 
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
@@ -48,6 +52,10 @@ class ShaderProgram {
     this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
     this.unifViewProj   = gl.getUniformLocation(this.prog, "u_ViewProj");
     this.unifColor      = gl.getUniformLocation(this.prog, "u_Color");
+    this.unifTime       = gl.getUniformLocation(this.prog, "u_Time");
+    this.unifCameraPos       = gl.getUniformLocation(this.prog, "u_CamPos");
+    this.unifFbmOffset       = gl.getUniformLocation(this.prog, "u_FbmOffset");
+    this.unifLandWaterRatio  = gl.getUniformLocation(this.prog, "u_LandWaterRatio");
   }
 
   use() {
@@ -82,6 +90,34 @@ class ShaderProgram {
     this.use();
     if (this.unifColor !== -1) {
       gl.uniform4fv(this.unifColor, color);
+    }
+  }
+
+  setTime(time: number) {
+    this.use();
+    if (this.unifTime !== -1) {
+      gl.uniform1f(this.unifTime, time);
+    }
+  }
+
+  setCameraPos(cameraPos: vec3) {
+    this.use();
+    if (this.unifCameraPos !== -1) {
+      gl.uniform3fv(this.unifCameraPos, cameraPos);
+    }
+  }
+
+  setFbmOffset(fbmOffset: number) {
+    this.use();
+    if (this.unifFbmOffset !== -1) {
+      gl.uniform1f(this.unifFbmOffset, fbmOffset);
+    }
+  }
+
+  setLandWaterRatio(landWaterRatio: number) {
+    this.use();
+    if (this.unifLandWaterRatio !== -1) {
+      gl.uniform1f(this.unifLandWaterRatio, landWaterRatio);
     }
   }
 
