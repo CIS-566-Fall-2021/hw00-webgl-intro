@@ -1,13 +1,12 @@
-import {mat4, vec4} from 'gl-matrix';
+import { mat4, vec4, vec3 } from 'gl-matrix';
 import Drawable from './Drawable';
 import Camera from '../../Camera';
-import {gl} from '../../globals';
+import { gl } from '../../globals';
 import ShaderProgram from './ShaderProgram';
 
 // In this file, `gl` is accessible because it is imported above
 class OpenGLRenderer {
-  constructor(public canvas: HTMLCanvasElement) {
-  }
+  constructor(public canvas: HTMLCanvasElement) {}
 
   setClearColor(r: number, g: number, b: number, a: number) {
     gl.clearColor(r, g, b, a);
@@ -22,21 +21,38 @@ class OpenGLRenderer {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   }
 
-  render(camera: Camera, prog: ShaderProgram, drawables: Array<Drawable>) {
+  render(
+    camera: Camera,
+    prog: ShaderProgram,
+    drawables: Array<Drawable>,
+    color: vec4,
+    time: number,
+    height: number,
+    shift: number,
+    light: number,
+    campos: vec3,
+    shader: number
+  ) {
     let model = mat4.create();
     let viewProj = mat4.create();
-    let color = vec4.fromValues(1, 0, 0, 1);
+    // let color = vec4.fromValues(1, 0, 0, 1);
 
     mat4.identity(model);
     mat4.multiply(viewProj, camera.projectionMatrix, camera.viewMatrix);
     prog.setModelMatrix(model);
     prog.setViewProjMatrix(viewProj);
     prog.setGeometryColor(color);
+    prog.setTime(time);
+    prog.setHeight(height);
+    prog.setShift(shift);
+    prog.setLight(light);
+    prog.setCameraPos(campos);
+    prog.setShadingModel(shader);
 
     for (let drawable of drawables) {
       prog.draw(drawable);
     }
   }
-};
+}
 
 export default OpenGLRenderer;
