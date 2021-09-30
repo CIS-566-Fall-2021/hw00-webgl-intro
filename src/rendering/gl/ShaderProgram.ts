@@ -29,6 +29,9 @@ class ShaderProgram {
   unifModelInvTr: WebGLUniformLocation;
   unifViewProj: WebGLUniformLocation;
   unifColor: WebGLUniformLocation;
+  unifTime: WebGLUniformLocation;
+  unifTerrain: WebGLUniformLocation;
+  unifCloud: WebGLUniformLocation;
 
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
@@ -48,6 +51,9 @@ class ShaderProgram {
     this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
     this.unifViewProj   = gl.getUniformLocation(this.prog, "u_ViewProj");
     this.unifColor      = gl.getUniformLocation(this.prog, "u_Color");
+    this.unifTime       = gl.getUniformLocation(this.prog, "u_Time");
+    this.unifTerrain    = gl.getUniformLocation(this.prog, "u_Terrain");
+    this.unifCloud      = gl.getUniformLocation(this.prog, "u_Cloud");
   }
 
   use() {
@@ -77,11 +83,32 @@ class ShaderProgram {
       gl.uniformMatrix4fv(this.unifViewProj, false, vp);
     }
   }
+  
+  setTime(time: number) {
+    this.use();
+    if (this.unifTime !== -1) {
+      gl.uniform1f(this.unifTime, time);
+    }
+  }
 
   setGeometryColor(color: vec4) {
     this.use();
     if (this.unifColor !== -1) {
       gl.uniform4fv(this.unifColor, color);
+    }
+  }
+
+  setTerrain(terrain: number) {
+    this.use();
+    if (this.unifColor !== -1) {
+      gl.uniform1f(this.unifTerrain, terrain);
+    }
+  }
+
+  setCloud(cloud: number) {
+    this.use();
+    if (this.unifColor !== -1) {
+      gl.uniform1f(this.unifCloud, cloud);
     }
   }
 

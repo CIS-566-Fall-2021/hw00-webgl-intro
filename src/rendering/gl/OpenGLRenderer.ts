@@ -22,16 +22,23 @@ class OpenGLRenderer {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   }
 
-  render(camera: Camera, prog: ShaderProgram, drawables: Array<Drawable>) {
+  render(camera: Camera, prog: ShaderProgram, drawables: Array<Drawable>,
+     u_color: vec4, u_time: number, u_terrain: number, u_cloud: number) {
     let model = mat4.create();
     let viewProj = mat4.create();
-    let color = vec4.fromValues(1, 0, 0, 1);
+    let time = u_time;
+    let color = u_color;
+    let terrain = u_terrain;
+    let cloud = u_cloud;
 
     mat4.identity(model);
     mat4.multiply(viewProj, camera.projectionMatrix, camera.viewMatrix);
     prog.setModelMatrix(model);
     prog.setViewProjMatrix(viewProj);
+    prog.setTime(time);
     prog.setGeometryColor(color);
+    prog.setTerrain(terrain);
+    prog.setCloud(cloud);
 
     for (let drawable of drawables) {
       prog.draw(drawable);
