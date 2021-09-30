@@ -5,6 +5,21 @@
 </p>
 <p align="center">(source: Ken Perlin)</p>
 
+## Process
+--------------------
+In this project I created a cube object and used a mix of fbm and perlin noise to color the cube in a fragment shader and sin functions with Time to modifuly the shape of the cube in a new fragment shader. I also modified the gui by adding a color variable that controls the main color used in the noise function. 
+
+![](images/cube1.png)
+
+![](images/cube2.png)
+
+![](images/cube3.png)
+
+Here is the link to my project! 
+
+https://emmaholthouser16.github.io/hw00-webgl-intro/
+
+
 ## Objective
 - Check that the tools and build configuration we will be using for the class works.
 - Start learning Typescript and WebGL2
