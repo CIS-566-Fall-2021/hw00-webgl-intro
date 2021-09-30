@@ -25,6 +25,9 @@ class ShaderProgram {
   attrNor: number;
   attrCol: number;
 
+  unifTemperature: WebGLUniformLocation;
+  unifMoisture: WebGLUniformLocation;
+  unifTick: WebGLUniformLocation;
   unifModel: WebGLUniformLocation;
   unifModelInvTr: WebGLUniformLocation;
   unifViewProj: WebGLUniformLocation;
@@ -44,10 +47,13 @@ class ShaderProgram {
     this.attrPos = gl.getAttribLocation(this.prog, "vs_Pos");
     this.attrNor = gl.getAttribLocation(this.prog, "vs_Nor");
     this.attrCol = gl.getAttribLocation(this.prog, "vs_Col");
-    this.unifModel      = gl.getUniformLocation(this.prog, "u_Model");
-    this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
-    this.unifViewProj   = gl.getUniformLocation(this.prog, "u_ViewProj");
-    this.unifColor      = gl.getUniformLocation(this.prog, "u_Color");
+    this.unifTick        = gl.getUniformLocation(this.prog, "u_Tick");
+    this.unifModel       = gl.getUniformLocation(this.prog, "u_Model");
+    this.unifModelInvTr  = gl.getUniformLocation(this.prog, "u_ModelInvTr");
+    this.unifViewProj    = gl.getUniformLocation(this.prog, "u_ViewProj");
+    this.unifColor       = gl.getUniformLocation(this.prog, "u_Color");
+    this.unifTemperature = gl.getUniformLocation(this.prog, "u_Temp");
+    this.unifMoisture    = gl.getUniformLocation(this.prog, "u_Moist");
   }
 
   use() {
@@ -82,6 +88,27 @@ class ShaderProgram {
     this.use();
     if (this.unifColor !== -1) {
       gl.uniform4fv(this.unifColor, color);
+    }
+  }
+
+  setTick(tickRate: number) {
+    this.use();
+    if (this.unifTick !== -1) {
+      gl.uniform1f(this.unifTick, tickRate);
+    }
+  }
+
+  setTempearture(temperature: number) {
+    this.use();
+    if (this.unifTemperature !== -1) {
+      gl.uniform1f(this.unifTemperature, temperature);
+    }
+  }
+
+  setMoisture(moisture: number) {
+    this.use();
+    if (this.unifMoisture !== -1) {
+      gl.uniform1f(this.unifMoisture, moisture);
     }
   }
 

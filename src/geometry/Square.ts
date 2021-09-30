@@ -30,6 +30,7 @@ class Square extends Drawable {
     this.generatePos();
     this.generateNor();
 
+
     this.count = this.indices.length;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.bufIdx);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);

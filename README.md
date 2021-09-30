@@ -4,6 +4,24 @@
   <img width="360" height="360" src="https://user-images.githubusercontent.com/1758825/132532354-e3a45402-e484-499e-bfa7-2d73b9f2c946.png">
 </p>
 <p align="center">(source: Ken Perlin)</p>
+## Name
+David Li 13109274
+
+## Description
+Added Color selecter. Color is also modified by a very jank fbm noise in fragment shader. Vertex shader adjusts position of vertices based on trig functions.
+
+Used Fbm noise to generate terrain with detailing done by Perlin. Created a temperature map by using 2d fbm, spreading outward from poles. Created a moisture map using fbm. These maps make use of bias and gain functions to adjust the terrain more favorably. Smoothstep is used to make the noise blend nicely. Fbm and a gain function were used to texture the oceans a bit. Biome/Color depends on whether value sampled at moisture map or temperature map reach a certain threshold, if this is the case, a different cosine color function is used for surpassing the temperature or moisture threshhold. There also exists a default cosine color function if neither threshold is met. The thresholds for temperature and moisture are modifiable attributes which can be adjusted to change the coldness and dryness of the planet. The cosine color functions also make use of stepping functions to generate steps of colors rather than a gradient. I also created clouds by rendering another sphere and using noise to alter the alpha value. The clouds can be toggled in controls. Lastly, a blinn phong is used to make the snowcaps whiter. 
+
+## Used Resourcess
+https://blog.demofox.org/2012/09/24/bias-and-gain-are-your-friend/
+
+http://dev.thi.ng/gradients/
+
+Link: https://thecollegeboardofc.github.io/hw00-webgl-intro/
+
+![Test Image 1](Ss1.png)
+![Test Image 1](Ss2.png)
+![Test Image 1](planet.PNG)
 
 ## Objective
 - Check that the tools and build configuration we will be using for the class works.
