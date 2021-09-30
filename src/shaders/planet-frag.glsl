@@ -317,8 +317,8 @@ float getElevation(vec3 noiseInput) {
     float mountElevation2 = 1.7;
     float mountElevation3 = 1.7;
     
-    float waveNoise= noise2(10.0 * noise2((0.0006 * u_Time) + 3.0 * vec3(noiseInput) + noiseInput) + noiseInput);
-    float elevation = mix(waterElevation, waterElevation + 0.05, waveNoise);
+    float waveNoise = noise2(5.0 * noise2((0.0006 * u_Time) + vec3(noiseInput) + noiseInput) + noiseInput);
+    float elevation = mix(waterElevation, waterElevation + 0.02, waveNoise);
 
     //float elevation = waterElevation;
     
