@@ -5,6 +5,13 @@
 </p>
 <p align="center">(source: Ken Perlin)</p>
 
+## Demo
+![screenshot](capture2.JPG)
+I created five biomes, including ocean, plain, mountain, alpine, cities. The ocean is animated fbm, so it simulates waves. Cities are generated with perlin noise, and only light up in the night. Biomes are generated with fbm and elevated by the noise. For tool box functions, I used bias and gain, sin, mix, and triangle wave to adjust the planet. 
+Users can control the ambient light, the deformation level, and which reflection model to render the planet.
+Link: https://effieyanfei.github.io/hw00-webgl-intro/
+
+
 ## Objective
 - Check that the tools and build configuration we will be using for the class works.
 - Start learning Typescript and WebGL2
@@ -75,3 +82,5 @@ To check if everything is on the right track:
   - Interfaces https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API
   - Types https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Types
   - Constants https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
+
+

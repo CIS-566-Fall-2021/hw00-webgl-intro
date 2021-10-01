@@ -29,6 +29,11 @@ class ShaderProgram {
   unifModelInvTr: WebGLUniformLocation;
   unifViewProj: WebGLUniformLocation;
   unifColor: WebGLUniformLocation;
+  unifTime: WebGLUniformLocation;
+  unifMode: WebGLUniformLocation;
+  unifAmbient: WebGLUniformLocation;
+  unifDeform: WebGLUniformLocation;
+
 
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
@@ -44,10 +49,15 @@ class ShaderProgram {
     this.attrPos = gl.getAttribLocation(this.prog, "vs_Pos");
     this.attrNor = gl.getAttribLocation(this.prog, "vs_Nor");
     this.attrCol = gl.getAttribLocation(this.prog, "vs_Col");
+
     this.unifModel      = gl.getUniformLocation(this.prog, "u_Model");
     this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
     this.unifViewProj   = gl.getUniformLocation(this.prog, "u_ViewProj");
-    this.unifColor      = gl.getUniformLocation(this.prog, "u_Color");
+    this.unifColor = gl.getUniformLocation(this.prog, "u_Color");
+    this.unifTime = gl.getUniformLocation(this.prog, "u_Time");
+    this.unifAmbient  = gl.getUniformLocation(this.prog, "u_Ambient");
+    this.unifDeform = gl.getUniformLocation(this.prog, "u_Deform");
+    this.unifMode = gl.getUniformLocation(this.prog, "u_Mode");
   }
 
   use() {
@@ -82,6 +92,34 @@ class ShaderProgram {
     this.use();
     if (this.unifColor !== -1) {
       gl.uniform4fv(this.unifColor, color);
+    }
+  }
+
+  setTime(time: number) {
+      this.use();
+      if (this.unifTime !== -1) {
+        gl.uniform1i(this.unifTime, time);
+      }
+  }
+
+  setMode(mode: number) {
+    this.use();
+    if (this.unifMode !== -1) {
+      gl.uniform1i(this.unifMode, mode);
+    }
+  }
+
+  setAmbient(ambient: number) {
+    this.use();
+    if (this.unifAmbient !== -1) {
+      gl.uniform1i(this.unifAmbient, ambient);
+    }
+  }
+
+  setDeform(deform: number) {
+    this.use();
+    if (this.unifDeform !== -1) {
+      gl.uniform1i(this.unifDeform, deform);
     }
   }
 
