@@ -9,8 +9,9 @@ class OpenGLRenderer {
   constructor(public canvas: HTMLCanvasElement) {
   }
 
-  setClearColor(r: number, g: number, b: number, a: number) {
-    gl.clearColor(r, g, b, a);
+  setClearColor(color: vec4) {
+    let black = vec4.fromValues(0.0 / 255.0, 0.0 / 255.0, 0.0 / 255.0, 1.0);
+    gl.clearColor(color[0], color[1], color[2], color[3]);
   }
 
   setSize(width: number, height: number) {
@@ -22,10 +23,10 @@ class OpenGLRenderer {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   }
 
-  render(camera: Camera, prog: ShaderProgram, drawables: Array<Drawable>) {
+  render(camera: Camera, prog: ShaderProgram, drawables: Array<Drawable>, cubeColor: vec4) {
     let model = mat4.create();
     let viewProj = mat4.create();
-    let color = vec4.fromValues(1, 0, 0, 1);
+    let color = cubeColor;
 
     mat4.identity(model);
     mat4.multiply(viewProj, camera.projectionMatrix, camera.viewMatrix);

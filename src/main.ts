@@ -1,7 +1,8 @@
-import {vec3} from 'gl-matrix';
+import {vec3, vec4} from 'gl-matrix';
 const Stats = require('stats-js');
 import * as DAT from 'dat.gui';
 import Icosphere from './geometry/Icosphere';
+import Cube from './geometry/Cube';
 import Square from './geometry/Square';
 import OpenGLRenderer from './rendering/gl/OpenGLRenderer';
 import Camera from './Camera';
@@ -11,19 +12,30 @@ import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
 const controls = {
-  tesselations: 5,
+  'terrain frequency': 0.5,
+  'earth to alien': 0.0,
+  'forest density': 0.2,
   'Load Scene': loadScene, // A function pointer, essentially
 };
 
 let icosphere: Icosphere;
+let cube: Cube;
 let square: Square;
+
 let prevTesselations: number = 5;
+let cubeColor: vec4 = vec4.fromValues(1, 0, 1, 1);
+
+// Procedural Controls
+let terrainFreq: number = 0.5;
+let earthToAlien: number = 0.0;
+let forestScale: number = 0.2;
+
+let time: number = 0;
+let tesselations: number = 5;
 
 function loadScene() {
-  icosphere = new Icosphere(vec3.fromValues(0, 0, 0), 1, controls.tesselations);
+  icosphere = new Icosphere(vec3.fromValues(0, 0, 0), 1, tesselations);
   icosphere.create();
-  square = new Square(vec3.fromValues(0, 0, 0));
-  square.create();
 }
 
 function main() {
@@ -37,7 +49,10 @@ function main() {
 
   // Add controls to the gui
   const gui = new DAT.GUI();
-  gui.add(controls, 'tesselations', 0, 8).step(1);
+
+  gui.add(controls, 'terrain frequency', 0.3, 2.0).step(0.05).onChange(function() { terrainFreq = controls['terrain frequency'] });
+  gui.add(controls, 'earth to alien', 0.0, 1.0).step(0.05).onChange(function() { earthToAlien = controls['earth to alien'] });
+  gui.add(controls, 'forest density', 0.0, 1.0).step(0.05).onChange(function() { forestScale = controls['forest density'] });
   gui.add(controls, 'Load Scene');
 
   // get canvas and webgl context
@@ -56,7 +71,10 @@ function main() {
   const camera = new Camera(vec3.fromValues(0, 0, 5), vec3.fromValues(0, 0, 0));
 
   const renderer = new OpenGLRenderer(canvas);
-  renderer.setClearColor(0.2, 0.2, 0.2, 1);
+  
+  // Create starry outerspace clear color
+  let darkBlue = vec4.fromValues(0.0 / 11.0, 0.0 / 255.0, .0 / 255.0, 1);
+  renderer.setClearColor(darkBlue);
   gl.enable(gl.DEPTH_TEST);
 
   const lambert = new ShaderProgram([
@@ -64,22 +82,41 @@ function main() {
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/lambert-frag.glsl')),
   ]);
 
+  const planet_shader = new ShaderProgram([
+    new Shader(gl.VERTEX_SHADER, require('./shaders/planet-vert.glsl')),
+    new Shader(gl.FRAGMENT_SHADER, require('./shaders/planet-frag.glsl')),
+  ]);
+
+  // const custom_shader = new ShaderProgram([
+  //   new Shader(gl.VERTEX_SHADER, require('./shaders/custom-vert.glsl')),
+  //   new Shader(gl.FRAGMENT_SHADER, require('./shaders/custom-frag.glsl')),
+  // ]);
+
   // This function will be called every frame
   function tick() {
+
+    planet_shader.setTime(time);
+    planet_shader.setTerrainFreq(terrainFreq);
+    planet_shader.setEarthToAlien(earthToAlien);
+    planet_shader.setForestScale(forestScale);
+    planet_shader.setCamera([camera.getEye()[0], camera.getEye()[1], camera.getEye()[2], 1.0]);
+
+    time++;
+
     camera.update();
     stats.begin();
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
     renderer.clear();
-    if(controls.tesselations != prevTesselations)
+    if(tesselations != prevTesselations)
     {
-      prevTesselations = controls.tesselations;
+      prevTesselations = 5;
       icosphere = new Icosphere(vec3.fromValues(0, 0, 0), 1, prevTesselations);
       icosphere.create();
     }
-    renderer.render(camera, lambert, [
+
+    renderer.render(camera, planet_shader, [
       icosphere,
-      // square,
-    ]);
+    ], cubeColor);
     stats.end();
 
     // Tell the browser to call `tick` again whenever it renders a new frame

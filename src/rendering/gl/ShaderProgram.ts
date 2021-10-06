@@ -1,4 +1,4 @@
-import {vec4, mat4} from 'gl-matrix';
+import {vec3, vec4, mat4} from 'gl-matrix';
 import Drawable from './Drawable';
 import {gl} from '../../globals';
 
@@ -29,6 +29,12 @@ class ShaderProgram {
   unifModelInvTr: WebGLUniformLocation;
   unifViewProj: WebGLUniformLocation;
   unifColor: WebGLUniformLocation;
+  unifTime: WebGLUniformLocation;
+  unifCamera: WebGLUniformLocation;
+
+  unifTerrainFreq: WebGLUniformLocation;
+  unifEarthToAlien: WebGLUniformLocation;
+  unifForestScale: WebGLUniformLocation;
 
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
@@ -48,6 +54,13 @@ class ShaderProgram {
     this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
     this.unifViewProj   = gl.getUniformLocation(this.prog, "u_ViewProj");
     this.unifColor      = gl.getUniformLocation(this.prog, "u_Color");
+    this.unifTime      = gl.getUniformLocation(this.prog, "u_Time");
+    this.unifCamera = gl.getUniformLocation(this.prog, "u_Camera");
+
+    // Procedural Controls
+    this.unifTerrainFreq = gl.getUniformLocation(this.prog, "terrainFreq");
+    this.unifEarthToAlien = gl.getUniformLocation(this.prog, "earthToAlien");
+    this.unifForestScale = gl.getUniformLocation(this.prog, "forestScale");
   }
 
   use() {
@@ -84,6 +97,42 @@ class ShaderProgram {
       gl.uniform4fv(this.unifColor, color);
     }
   }
+
+  setTime(time: number) {
+    this.use();
+    if (this.unifTime !== -1) {
+      gl.uniform1f(this.unifTime, time);
+    }
+  }
+
+  setCamera(cam: vec4) {
+    this.use();
+    if (this.unifCamera !== -1) {
+      gl.uniform4fv(this.unifCamera, cam);
+    }
+  }
+
+  setTerrainFreq(freq: number) {
+    this.use();
+    if (this.unifTerrainFreq !== -1) {
+      gl.uniform1f(this.unifTerrainFreq, freq);
+    }
+  }
+
+  setEarthToAlien(earthToAlien: number) {
+    this.use();
+    if (this.unifEarthToAlien !== -1) {
+      gl.uniform1f(this.unifEarthToAlien, earthToAlien);
+    }
+  }
+  
+  setForestScale(forestScale: number) {
+    this.use();
+    if (this.unifForestScale !== -1) {
+      gl.uniform1f(this.unifForestScale, forestScale);
+    }
+  }
+
 
   draw(d: Drawable) {
     this.use();

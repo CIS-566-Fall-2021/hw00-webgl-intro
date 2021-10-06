@@ -36,6 +36,10 @@ class Camera {
     vec3.add(this.target, this.position, this.direction);
     mat4.lookAt(this.viewMatrix, this.controls.eye, this.controls.center, this.controls.up);
   }
+
+  getEye() {
+    return this.controls.eye;
+  }
 };
 
 export default Camera;
