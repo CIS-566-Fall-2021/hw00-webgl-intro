@@ -5,6 +5,16 @@
 </p>
 <p align="center">(source: Ken Perlin)</p>
 
+## Submitted Version
+- Features:
+  - Cube class added
+  - User can toggle between "Lambert Shader" and "Custom Shader", using corresponding gui button
+  - User can change the color of the cube in Lamber Shader mode, using currColor color palette
+  - <img height="360" src="img/HW00-LambertShader.png">
+  - <img height="360" src="img/HW00-CustomShader-01.png">
+  - <img height="360" src="img/HW00-CustomShader-02.png">
+- Live Demo Link: https://raykim1996.github.io/hw00-webgl-intro/
+
 ## Objective
 - Check that the tools and build configuration we will be using for the class works.
 - Start learning Typescript and WebGL2

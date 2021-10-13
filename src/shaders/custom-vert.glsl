@@ -34,10 +34,85 @@ out vec4 fs_Pos;
 const vec4 lightPos = vec4(5, 5, 3, 1); //The position of our virtual light, which is used to compute the shading of
                                         //the geometry in the fragment shader.
 
+//noise basis function
+float noiseFBM2D(vec2 n)
+{
+    return (fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453));
+}
+
+//interpNoise2D
+float interpNoise2D(float x, float y)
+{
+    float intX = floor(x);
+    float fractX = fract(x);
+    float intY = floor(y);
+    float fractY = fract(y);
+
+    float v1 = noiseFBM2D(vec2(intX, intY));
+    float v2 = noiseFBM2D(vec2(intX + 1.0, intY));
+    float v3 = noiseFBM2D(vec2(intX, intY + 1.0));
+    float v4 = noiseFBM2D(vec2(intX + 1.0, intY + 1.0));
+
+    float i1 = mix(v1, v2, fractX);
+    float i2 = mix(v3, v4, fractX);
+    return mix(i1, i2, fractY);
+}
+
+//fbm function
+float fbm(float x, float y)
+{
+    float total = 0.0;
+    float persistence = 0.5;
+    float octaves = 4.0;
+    total = (total + sin((u_Time + 71.22913)) * 0.5);
+    for(float i = 1.0; i <= octaves; i++) {
+        float freq = pow(2.0, i);
+        float amp = pow(persistence, i);
+
+        total += interpNoise2D(x * freq, y * freq) * amp;
+    }
+    return total;
+}
+
+vec3 newPosGenerate(vec3 pos, vec3 nor) {
+    vec3 newPos = vec3(0, 0, 0);
+    if (nor.x > 0.2) {     //right case
+        newPos = vec3((fbm(pos.z, pos.y) * 2.0), pos.y, pos.z);
+    } else if (nor.x < -0.2) {     //left case
+        newPos = vec3(-(fbm(pos.z, pos.y) * 2.0), pos.y, pos.z);
+    } else if (nor.y > 0.2) {      //up case
+        newPos = vec3(pos.x, (fbm(pos.x, pos.z) * 2.0), pos.z);
+    } else if (nor.y < -0.2) {      //up case
+        newPos = vec3(pos.x, -(fbm(pos.x, pos.z) * 2.0), pos.z);
+    } else if (nor.z > 0.2) {      //front case
+        newPos = vec3(pos.x, pos.y, (fbm(pos.x, pos.y) * 2.0));
+    } else {      //back case
+        newPos = vec3(pos.x, pos.y, -(fbm(pos.x, pos.y) * 2.0));
+    }
+    return newPos;
+}
+
+vec3 newPosGenerate1(vec3 pos, vec3 nor) {
+    float val = 0.0;
+    if (nor.x > 0.1) {     //right case
+        val = fbm(pos.y, pos.z);
+    } else if (nor.x < -0.1) {     //left case
+        val = fbm(pos.y, pos.z);
+    } else if (nor.y > 0.1) {      //up case
+        val = fbm(pos.x, pos.z);
+    } else if (nor.y < -0.1) {      //up case
+        val = fbm(pos.x, pos.z);
+    } else if (nor.z > 0.1) {      //front case
+        val = fbm(pos.x, pos.y);
+    } else if (nor.z < -0.1) {      //back case
+        val = fbm(pos.x, pos.y);
+    }
+    return (normalize(pos) * val * 0.8);
+}
+
 void main()
 {
     fs_Col = vs_Col;                         // Pass the vertex colors to the fragment shader for interpolation
-
     mat3 invTranspose = mat3(u_ModelInvTr);
     fs_Nor = vec4(invTranspose * vec3(vs_Nor), 0);          // Pass the vertex normals to the fragment shader for interpolation.
                                                             // Transform the geometry's normals by the inverse transpose of the
@@ -45,11 +120,16 @@ void main()
                                                             // perpendicular to the surface after the surface is transformed by
                                                             // the model matrix.
 
-
-    vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
+    vec4 modelposition = u_Model * 
+        mix(
+            (vs_Pos + (sin(vs_Pos * 10.0 + u_Time * 10.0) * 0.1 + cos(vs_Pos * 10.0 + u_Time * 10.0)) * 0.3),
+            vec4(normalize(vec3(vs_Pos)), 1),
+            0.2 +  0.15 * sin(u_Time * 0.2)
+        );
 
     fs_LightVec = lightPos - modelposition;  // Compute the direction in which the light source lies
+    fs_Pos = modelposition;                         // Pass the vertex positions to the fragment shader
 
     gl_Position = u_ViewProj * modelposition;// gl_Position is a built-in variable of OpenGL which is
-                                             // used to render the final positions of the geometry's vertices    
+                                             // used to render the final positions of the geometry's vertices
 }
