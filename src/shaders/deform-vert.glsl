@@ -19,6 +19,8 @@ uniform mat4 u_ViewProj;    // The matrix that defines the camera's transformati
                             // We've written a static matrix for you to use for HW2,
                             // but in HW3 you'll have to generate one yourself
 
+uniform highp int u_Time;
+
 in vec4 vs_Pos;             // The array of vertex positions passed to the shader
 
 in vec4 vs_Nor;             // The array of vertex normals passed to the shader
@@ -44,12 +46,24 @@ void main()
                                                             // perpendicular to the surface after the surface is transformed by
                                                             // the model matrix.
 
-
     vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
 
     fs_LightVec = lightPos - modelposition;  // Compute the direction in which the light source lies
 
-    gl_Position = u_ViewProj * modelposition;// gl_Position is a built-in variable of OpenGL which is
+    // Calculate default and outward positions
+    vec3 defaultPos = vec3(modelposition);
+    vec3 outPos = normalize(defaultPos) * 3.f * sin(float(u_Time) / 150.f);
+
+    // Time-changing function
+    float t = abs(cos(float(u_Time) / 80.f));
+
+    // Linear interpolation between default position and out position based on time
+    float x = mix(defaultPos[0] * cos(float(u_Time) / 10.f), outPos[0], t);
+    float y = mix(defaultPos[1] * sin(float(u_Time) / 50.f) / 20.f, outPos[1], t);
+    float z = mix(defaultPos[2] * sin(float(u_Time) / 30.f), outPos[2], t);
+    vec4 newPos = vec4(x, y, z, 1);
+
+    gl_Position = u_ViewProj * newPos;// gl_Position is a built-in variable of OpenGL which is
                                              // used to render the final positions of the geometry's vertices
     fs_Pos = gl_Position;
 }
